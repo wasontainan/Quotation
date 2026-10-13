@@ -618,7 +618,6 @@
         discountAmount = discountValue;
         finalRevenue = Math.max(0, rawRevenue - discountAmount);
       } else if (discountType === 'percent') {
-        // 百分比折扣 (例如輸入 9 代表 9 折，即 0.9；輸入 0.85 代表 85 折)
         const rate = discountValue > 1 ? discountValue / 10 : discountValue;
         discountAmount = rawRevenue * (1 - rate);
         finalRevenue = rawRevenue * rate;
@@ -632,7 +631,6 @@
 
       // 更新右側面板統計數字
       document.getElementById('statOriginalRevenue').innerText = `NT$ ${rawRevenue.toLocaleString()}`;
-      document.getElementById('statDiscountAmountLL') = ''; // placeholder
       document.getElementById('statDiscountAmount').innerText = `- NT$ ${Math.round(discountAmount).toLocaleString()}`;
       document.getElementById('statRevenue').innerText = `NT$ ${Math.round(finalRevenue).toLocaleString()}`;
 

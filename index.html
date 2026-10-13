@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>G-180 模組化報價系統</title>
+  <!-- Tailwind CSS 樣式庫 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PapaParse 用於解析 CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <!-- html2pdf.js 用於生成 PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @media print { .no-print { display: none !important; } }
+    .pdf-page { width: 210mm; min-height: 297mm; padding: 15mm; background: white; margin: auto; }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800">
+
+  <!-- 頂部操作列 (不列印) -->
+  <header class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md no-print">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        <span>⚙️ G-180 模組化報價系統</span>
+      </h1>
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-1.5 text-sm cursor-pointer bg-slate-700 px-3 py-1.5 rounded hover:bg-slate-600">
+          <input type="checkbox" id="toggleInternal" checked onchange="renderUI()" class="rounded text-blue-500">
+          <span>顯示內部成本與毛利</span>
+        </label>
+        <button onclick="exportPDF()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-1.5 rounded shadow transition flex items-center gap-1">
+          📄 產生 PDF 報價單
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 no-print">
+    
+    <!-- 左側：客戶資訊與模組選擇選單 (8 欄) -->
+    <div class="lg:col-span-7 space-y-6">
+      
+      <!-- 客戶基本資訊卡片 -->
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
+        <h2 class="font-bold text-lg text-slate-700 border-b pb-2 mb-4">📋 客戶與報價基本資訊</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div><label class="block text-slate-500 mb-1">客戶名稱</label><input type="text" id="custName" value="大瓏企業股份有限公司" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">聯絡人員</label><input type="text" id="custContact" value="Kevin Liang 梁震威" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">報價單號</label><input type="text" id="quoteNo" value="TY250109P" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">報價日期</label><input type="date" id="quoteDate" value="2025-01-09" onchange="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">膠種 / 比例</label><input type="text" id="glueSpec" value="AB膠 (100:20 / 15cc/秒)" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">付款條件</label><input type="text" id="paymentTerm" value="訂金40%，驗收後60天票期60%" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+        </div>
+      </div>
+
+      <!-- 模組挑選區 -->
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center border-b pb-2 mb-4">
+          <h2 class="font-bold text-lg text-slate-700">🧩 設備與模組選購</h2>
+          <span id="loadingStatus" class="text-xs text-blue-600 font-medium">載入價格庫中...</span>
+        </div>
+        <div id="moduleCategories" class="space-y-6">
+          <!-- 動態載入分類項目 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側：即時成本/毛利與摘要試算 (5 欄) -->
+    <div class="lg:col-span-5 space-y-6">
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20">
+        <h2 class="font-bold text-lg text-slate-700 border-b pb-2 mb-4">📊 報價金額與利潤試算</h2>
+        
+        <div class="space-y-3">
+          <div class="flex justify-between text-slate-600">
+            <span>未稅報價總額 (Revenue)</span>
+            <span id="statRevenue" class="font-bold text-slate-900 text-lg">NT$ 0</span>
+          </div>
+
+          <div id="internalCalcBox" class="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
+            <div class="flex justify-between text-sm text-slate-600">
+              <span>預估總成本 (Cost)</span>
+              <span id="statCost" class="font-semibold text-slate-700">NT$ 0</span>
+            </div>
+            <div class="flex justify-between text-sm text-slate-600">
+              <span>預估毛利 (Margin)</span>
+              <span id="statMargin" class="font-semibold text-emerald-600">NT$ 0</span>
+            </div>
+            <div class="flex justify-between text-sm text-slate-600">
+              <span>整體毛利率 (%)</span>
+              <span id="statMarginRate" class="font-bold text-emerald-600">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <h3 class="font-semibold text-sm text-slate-500 mb-2">已選項目清單 (<span id="selectedCount">0</span>)</h3>
+          <ul id="selectedList" class="text-xs space-y-1.5 max-h-60 overflow-y-auto border-t pt-2 text-slate-600">
+            <!-- 動態列出選取項目 -->
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 PDF 預覽與輸出區域 -->
+  <div class="my-8 no-print text-center text-xs text-slate-400">以下為 PDF 報價單預覽畫面</div>
+  
+  <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
+    <!-- 報價單 Header -->
+    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-wide text-slate-900">華勝科技股份有限公司</h1>
+        <p class="text-xs text-slate-500 mt-1">G-180 雙液灌膠機 標準報價單 (Quotation)</p>
+      </div>
+      <div class="text-right text-xs text-slate-600">
+        <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
+        <p>報價日期：<span id="pdfQuoteDate"></span></p>
+        <p>有效期限：15天</p>
+      </div>
+    </div>
+
+    <!-- 客戶與交易條件 -->
+    <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded mb-4 border border-slate-200">
+      <div>
+        <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
+        <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
+        <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
+      </div>
+      <div>
+        <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
+        <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
+        <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
+      </div>
+    </div>
+
+    <!-- 報價明細表格 -->
+    <table class="w-full text-xs border-collapse mb-4">
+      <thead>
+        <tr class="bg-slate-800 text-white">
+          <th class="p-2 text-left w-12">項次</th>
+          <th class="p-2 text-left">項目名稱與規格說明</th>
+          <th class="p-2 text-center w-16">數量</th>
+          <th class="p-2 text-center w-12">單位</th>
+          <th class="p-2 text-right w-24">單價 (NTD)</th>
+          <th class="p-2 text-right w-24">小計 (NTD)</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
+        <!-- 動態帶入 -->
+      </tbody>
+    </table>
+
+    <!-- 金額總計 -->
+    <div class="flex justify-end mb-6">
+      <div class="w-64 space-y-1 text-xs text-right">
+        <div class="flex justify-between py-1 border-b">
+          <span class="text-slate-500">未稅總額 (Subtotal)：</span>
+          <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+        </div>
+        <div class="flex justify-between py-1 border-b">
+          <span class="text-slate-500">營業稅 (5% Tax)：</span>
+          <span id="pdfTax">NT$ 0</span>
+        </div>
+        <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
+          <span>報價總額 (Total)：</span>
+          <span id="pdfTotal">NT$ 0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 條款與簽核區 -->
+    <div class="border-t pt-3 text-[10px] text-slate-500 space-y-1">
+      <p><b>備註與條款：</b></p>
+      <p>1. 驗收：標準機型交機後一個月驗收完畢；客製機型交機後兩個月驗收完畢。</p>
+      <p>2. 保固：機台自交機日起保固一年，天災及人為因素損壞除外。</p>
+      <p>3. 備品：隨機附贈標準混合管 20 支、膠閥油封 1 套。</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
+      <div>
+        <p class="mb-8">客戶確認簽章：</p>
+        <p class="border-b border-slate-400 w-48"></p>
+      </div>
+      <div>
+        <p class="mb-8">報價單位：華勝科技股份有限公司</p>
+        <p class="border-b border-slate-400 w-48">報價人員：</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ 請將下方的網址替換成您第一步取得的 Google Sheets 發布 CSV 網址 ⚠️
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?gid=1765616625&single=true&output=csv';
+
+    let modulesData = [];
+    let selectedItems = {};
+
+    // 初始化：讀取 Google Sheets CSV
+    window.onload = function() {
+      if (CSV_URL.includes('2PACX-1v...')) {
+        document.getElementById('loadingStatus').innerText = '⚠️ 請先在代碼中填入 Google Sheets 發布的 CSV 網址！';
+        document.getElementById('loadingStatus').classList.add('text-red-500');
+        return;
+      }
+
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          modulesData = results.data.filter(r => r['模組編號'] && r['模組編號'].trim() !== '');
+          document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
+          document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
+          
+          // 預設勾選必選項目
+          modulesData.forEach(m => {
+            if (m['選配屬性'] === '必選') {
+              selectedItems[m['模組編號']] = { selected: true, qty: 1, customPrice: null };
+            }
+          });
+
+          renderModules();
+          updatePreview();
+        },
+        error: function(err) {
+          document.getElementById('loadingStatus').innerText = '❌ 價格庫載入失敗';
+        }
+      });
+    };
+
+    // 渲染模組挑選清單
+    function renderModules() {
+      const container = document.getElementById('moduleCategories');
+      container.innerHTML = '';
+
+      const categories = [...new Set(modulesData.map(m => m['模組類別']))];
+
+      categories.forEach(cat => {
+        const catItems = modulesData.filter(m => m['模組類別'] === cat);
+        let html = `<div class="border rounded-md p-3 bg-slate-50"><h3 class="font-bold text-sm text-slate-700 mb-2">${cat}</h3><div class="space-y-2">`;
+
+        catItems.forEach(item => {
+          const id = item['模組編號'];
+          const isSelected = selectedItems[id]?.selected || false;
+          const qty = selectedItems[id]?.qty || 1;
+          const isRequired = item['選配屬性'] === '必選';
+          const price = Number(item['標準售價(NTD)'].replace(/,/g, '')) || 0;
+
+          html += `
+            <div class="flex items-center justify-between bg-white p-2.5 rounded border text-sm">
+              <div class="flex items-start gap-2 flex-1 pr-2">
+                <input type="checkbox" id="chk_${id}" ${isSelected ? 'checked' : ''} ${isRequired ? 'disabled' : ''} onchange="toggleSelect('${id}')" class="mt-1 rounded text-blue-600">
+                <div>
+                  <label for="chk_${id}" class="font-semibold text-slate-800 cursor-pointer">${item['項目名稱']} <span class="text-xs text-slate-400">(${id})</span></label>
+                  <p class="text-xs text-slate-500">${item['規格與功能說明']}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold text-slate-600">NT$ ${price.toLocaleString()}</span>
+                <input type="number" min="1" value="${qty}" onchange="updateQty('${id}', this.value)" ${!isSelected ? 'disabled' : ''} class="w-14 border rounded p-1 text-center text-xs">
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    function toggleSelect(id) {
+      if (!selectedItems[id]) selectedItems[id] = { selected: false, qty: 1 };
+      selectedItems[id].selected = !selectedItems[id].selected;
+      renderModules();
+      updatePreview();
+    }
+
+    function updateQty(id, qty) {
+      if (selectedItems[id]) {
+        selectedItems[id].qty = Math.max(1, parseInt(qty) || 1);
+        updatePreview();
+      }
+    }
+
+    // 計算總額與更新預覽
+    function updatePreview() {
+      let totalRevenue = 0;
+      let totalCost = 0;
+      let count = 0;
+
+      const pdfBody = document.getElementById('pdfTableBody');
+      const selectedListUI = document.getElementById('selectedList');
+      pdfBody.innerHTML = '';
+      selectedListUI.innerHTML = '';
+
+      modulesData.forEach(item => {
+        const id = item['模組編號'];
+        const sel = selectedItems[id];
+
+        if (sel && sel.selected) {
+          count++;
+          const qty = sel.qty;
+          const price = Number(item['標準售價(NTD)'].replace(/,/g, '')) || 0;
+          const cost = Number(item['預估成本(NTD)'].replace(/,/g, '')) || 0;
+          
+          const itemSubtotal = price * qty;
+          const itemCostTotal = cost * qty;
+
+          totalRevenue += itemSubtotal;
+          totalCost += itemCostTotal;
+
+          // 更新右側選取清單
+          selectedListUI.innerHTML += `<li class="flex justify-between"><span>${item['項目名稱']} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+          // 更新 PDF 報價明細
+          pdfBody.innerHTML += `
+            <tr>
+              <td class="p-2 text-center">${count}</td>
+              <td class="p-2"><div class="font-semibold">${item['項目名稱']}</div><div class="text-[10px] text-slate-500">${item['規格與功能說明']}</div></td>
+              <td class="p-2 text-center">${qty}</td>
+              <td class="p-2 text-center">${item['預設單位']}</td>
+              <td class="p-2 text-right">${price.toLocaleString()}</td>
+              <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+            </tr>
+          `;
+        }
+      });
+
+      const totalMargin = totalRevenue - totalCost;
+      const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
+
+      // 更新數字看板
+      document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
+      document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
+      document.getElementById('statMarginRate').innerText = `${marginRate}%`;
+      document.getElementById('selectedCount').innerText = count;
+
+      // 更新 PDF 同步資訊
+      document.getElementById('pdfCustName').innerText = document.getElementById('custName').value;
+      document.getElementById('pdfCustContact').innerText = document.getElementById('custContact').value;
+      document.getElementById('pdfQuoteNo').innerText = document.getElementById('quoteNo').value;
+      document.getElementById('pdfQuoteDate').innerText = document.getElementById('quoteDate').value;
+      document.getElementById('pdfGlueSpec').innerText = document.getElementById('glueSpec').value;
+      document.getElementById('pdfPaymentTerm').innerText = document.getElementById('paymentTerm').value;
+
+      const tax = Math.round(totalRevenue * 0.05);
+      document.getElementById('pdfSubtotal').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('pdfTax').innerText = `NT$ ${tax.toLocaleString()}`;
+      document.getElementById('pdfTotal').innerText = `NT$ ${(totalRevenue + tax).toLocaleString()}`;
+    }
+
+    function renderUI() {
+      const showInternal = document.getElementById('toggleInternal').checked;
+      document.getElementById('internalCalcBox').style.display = showInternal ? 'block' : 'none';
+    }
+
+    // 匯出 PDF
+    function exportPDF() {
+      const element = document.getElementById('pdfContent');
+      const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
+      const custName = document.getElementById('custName').value || 'Customer';
+
+      const opt = {
+        margin:       0,
+        filename:     `${custName}_報價單_${quoteNo}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>

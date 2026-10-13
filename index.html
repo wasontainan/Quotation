@@ -261,22 +261,26 @@
           <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200"></tbody>
         </table>
 
-        <!-- 金額總計 -->
+        <!-- 金額總計 (調整字體大小層級) -->
         <div class="flex justify-end mb-6">
-          <div class="w-72 space-y-1 text-xs text-right">
-            <div id="pdfDiscountRow" class="flex justify-between py-1 border-b hidden text-red-700">
+          <div class="w-72 space-y-1 text-right">
+            <!-- 專案折扣 (含稅)：text-sm 粗體 -->
+            <div id="pdfDiscountRow" class="flex justify-between items-center py-1 border-b hidden text-red-700 font-bold text-sm">
               <span id="pdfDiscountLabel">專案折扣 (含稅)：</span>
               <span id="pdfDiscountAmountText">- NT$ 0</span>
             </div>
-            <div class="flex justify-between py-1 border-b">
-              <span class="text-slate-500">未稅總額 (Subtotal)：</span>
-              <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+            <!-- 未稅總額：text-xs 略小字體 -->
+            <div class="flex justify-between items-center py-1 border-b text-xs text-slate-600">
+              <span>未稅總額 (Subtotal)：</span>
+              <span id="pdfSubtotal" class="font-medium text-slate-800">NT$ 0</span>
             </div>
-            <div class="flex justify-between py-1 border-b">
-              <span class="text-slate-500">營業稅 (5% Tax)：</span>
-              <span id="pdfTax">NT$ 0</span>
+            <!-- 營業稅：text-xs 略小字體 -->
+            <div class="flex justify-between items-center py-1 border-b text-xs text-slate-600">
+              <span>營業稅 (5% Tax)：</span>
+              <span id="pdfTax" class="font-medium text-slate-800">NT$ 0</span>
             </div>
-            <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
+            <!-- 報價總額：text-sm 粗體 (與專案折扣同大小) -->
+            <div class="flex justify-between items-center py-1 font-bold text-sm text-blue-900">
               <span>報價總額 (Total)：</span>
               <span id="pdfTotal">NT$ 0</span>
             </div>
@@ -614,11 +618,11 @@
         `;
       });
 
-      // 💡 先算出未稅原價，加上 5% 營業稅得到「原含稅總額」
+      // 先算出未稅原價，加上 5% 營業稅得到「原含稅總額」
       const rawTax = rawRevenue * 0.05;
       const rawTotal = rawRevenue + rawTax;
 
-      // 💡 讀取折扣設定 (基於含稅總額計算)
+      // 讀取折扣設定 (基於含稅總額計算)
       const discountType = document.getElementById('discountType').value;
       const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
       const manualTotalInput = parseFloat(document.getElementById('manualTotal').value);
@@ -641,7 +645,7 @@
         discountAmount = Math.max(0, rawTotal - finalTotal);
       }
 
-      // 💡 從最終含稅總額反推回未稅總額與營業稅 (公式：未稅 = 含稅 / 1.05)
+      // 從最終含稅總額反推回未稅總額與營業稅
       const finalRevenue = finalTotal / 1.05;
       const finalTax = finalTotal - finalRevenue;
 

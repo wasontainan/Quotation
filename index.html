@@ -11,8 +11,12 @@
   <!-- html2pdf.js 用於生成 PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    @media print { .no-print { display: none !important; } }
-    .pdf-page { width: 210mm; min-height: 297mm; padding: 15mm; background: white; margin: auto; }
+    @media print { 
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .pdf-page { shadow: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; }
+    }
+    .pdf-page { width: 210mm; min-height: 297mm; padding: 15mm; background: white; margin: auto; box-sizing: border-box; }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -50,6 +54,16 @@
           <div><label class="block text-slate-500 mb-1">報價日期</label><input type="date" id="quoteDate" value="2025-01-09" onchange="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">膠種 / 比例</label><input type="text" id="glueSpec" value="AB膠 (100:20 / 15cc/秒)" oninput="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">付款條件</label><input type="text" id="paymentTerm" value="訂金40%，驗收後60天票期60%" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          
+          <!-- 💡 報價人員與簽名檔上傳區 -->
+          <div><label class="block text-slate-500 mb-1">報價人員姓名</label><input type="text" id="salesName" value="黃信傑" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div>
+            <label class="block text-slate-500 mb-1">上傳電子簽名檔 (圖片)</label>
+            <div class="flex items-center gap-2">
+              <input type="file" id="signatureInput" accept="image/*" onchange="handleSignatureUpload(event)" class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+              <button onclick="clearSignature()" class="text-xs text-red-500 hover:underline">清除</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -64,7 +78,7 @@
         </div>
       </div>
 
-      <!-- 💡 客製化 / 臨時手動新增品項區 -->
+      <!-- 非標 / 客製化新增項目區 -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-amber-200 bg-amber-50/20">
         <div class="flex justify-between items-center border-b border-amber-200 pb-2 mb-4">
           <h2 class="font-bold text-lg text-amber-800 flex items-center gap-1.5">
@@ -122,85 +136,93 @@
   <!-- A4 PDF 預覽與輸出區域 -->
   <div class="my-8 no-print text-center text-xs text-slate-400">以下為 PDF 報價單預覽畫面</div>
   
-  <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
-    <!-- 報價單 Header -->
-    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-wide text-slate-900">華勝科技股份有限公司</h1>
-        <p class="text-xs text-slate-500 mt-1">G-180 雙液灌膠機 標準報價單 (Quotation)</p>
-      </div>
-      <div class="text-right text-xs text-slate-600">
-        <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
-        <p>報價日期：<span id="pdfQuoteDate"></span></p>
-        <p>有效期限：15天</p>
-      </div>
-    </div>
-
-    <!-- 客戶與交易條件 -->
-    <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded mb-4 border border-slate-200">
-      <div>
-        <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
-        <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
-        <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
-      </div>
-      <div>
-        <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
-        <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
-        <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
-      </div>
-    </div>
-
-    <!-- 報價明細表格 -->
-    <table class="w-full text-xs border-collapse mb-4">
-      <thead>
-        <tr class="bg-slate-800 text-white">
-          <th class="p-2 text-left w-12">項次</th>
-          <th class="p-2 text-left">項目名稱與規格說明</th>
-          <th class="p-2 text-center w-16">數量</th>
-          <th class="p-2 text-center w-12">單位</th>
-          <th class="p-2 text-right w-24">單價 (NTD)</th>
-          <th class="p-2 text-right w-24">小計 (NTD)</th>
-        </tr>
-      </thead>
-      <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
-        <!-- 動態帶入 -->
-      </tbody>
-    </table>
-
-    <!-- 金額總計 -->
-    <div class="flex justify-end mb-6">
-      <div class="w-64 space-y-1 text-xs text-right">
-        <div class="flex justify-between py-1 border-b">
-          <span class="text-slate-500">未稅總額 (Subtotal)：</span>
-          <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+  <div class="p-4 bg-slate-200 overflow-x-auto">
+    <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
+      <!-- 報價單 Header -->
+      <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
+        <div>
+          <h1 class="text-2xl font-bold tracking-wide text-slate-900">華勝科技股份有限公司</h1>
+          <p class="text-xs text-slate-500 mt-1">G-180 雙液灌膠機 標準報價單 (Quotation)</p>
         </div>
-        <div class="flex justify-between py-1 border-b">
-          <span class="text-slate-500">營業稅 (5% Tax)：</span>
-          <span id="pdfTax">NT$ 0</span>
-        </div>
-        <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
-          <span>報價總額 (Total)：</span>
-          <span id="pdfTotal">NT$ 0</span>
+        <div class="text-right text-xs text-slate-600">
+          <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
+          <p>報價日期：<span id="pdfQuoteDate"></span></p>
+          <p>有效期限：15天</p>
         </div>
       </div>
-    </div>
 
-    <!-- 條款與簽核區 -->
-    <div class="border-t pt-3 text-[10px] text-slate-500 space-y-1">
-      <p><b>備註與條款：</b></p>
-      <p>1. 驗收：標準機型交機後一個月驗收完畢；客製機型交機後兩個月驗收完畢。</p>
-      <p>2. 保固：機台自交機日起保固一年，天災及人為因素損壞除外。</p>
-      <p>3. 備品：隨機附贈標準混合管 20 支、膠閥油封 1 套。</p>
-    </div>
-
-    <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
-      <div>
-        <p class="mb-8">客戶確認簽章：</p>
-        <p class="border-b border-slate-400 w-48"></p>
+      <!-- 客戶與交易條件 -->
+      <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded mb-4 border border-slate-200">
+        <div>
+          <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
+          <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
+          <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
+        </div>
+        <div>
+          <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
+          <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
+          <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
+        </div>
       </div>
-      <div>
-        <p class="mb-8">報價單位：華勝科技股份有限公司</p>
-        <p class="border-b border-slate-400 w-48">報價人員：</p>
+
+      <!-- 報價明細表格 -->
+      <table class="w-full text-xs border-collapse mb-4">
+        <thead>
+          <tr class="bg-slate-800 text-white">
+            <th class="p-2 text-left w-12">項次</th>
+            <th class="p-2 text-left">項目名稱與規格說明</th>
+            <th class="p-2 text-center w-16">數量</th>
+            <th class="p-2 text-center w-12">單位</th>
+            <th class="p-2 text-right w-24">單價 (NTD)</th>
+            <th class="p-2 text-right w-24">小計 (NTD)</th>
+          </tr>
+        </thead>
+        <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
+          <!-- 動態帶入 -->
+        </tbody>
+      </table>
+
+      <!-- 金額總計 -->
+      <div class="flex justify-end mb-6">
+        <div class="w-64 space-y-1 text-xs text-right">
+          <div class="flex justify-between py-1 border-b">
+            <span class="text-slate-500">未稅總額 (Subtotal)：</span>
+            <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+          </div>
+          <div class="flex justify-between py-1 border-b">
+            <span class="text-slate-500">營業稅 (5% Tax)：</span>
+            <span id="pdfTax">NT$ 0</span>
+          </div>
+          <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
+            <span>報價總額 (Total)：</span>
+            <span id="pdfTotal">NT$ 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 備註與條款 -->
+      <div class="border-t pt-3 text-[10px] text-slate-600 space-y-1">
+        <p class="font-bold text-slate-800 mb-1">其他資訊：</p>
+        <p>1. 稅金:以上報價為工廠出貨價，不包含營業稅。</p>
+        <p>2. 驗收:標準機型交機後一個月驗收完畢；客製機型交機後兩個月驗收完畢。</p>
+        <p>3. 保固:機台自交機日起保固一年，天災及人為錯誤除外。</p>
+        <p>4. 備品:隨機附贈混合管20支、膠閥油封1套</p>
+      </div>
+
+      <!-- 💡 簽核區域（支援電子簽名檔圖片預覽） -->
+      <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
+        <div>
+          <p class="mb-12">客戶確認簽章：</p>
+          <p class="border-b border-slate-400 w-48"></p>
+        </div>
+        <div>
+          <p class="mb-2">報價單位：華勝科技股份有限公司</p>
+          <div class="relative h-12 flex items-end">
+            <!-- 簽名檔圖片顯示位置 -->
+            <img id="pdfSignatureImg" class="absolute bottom-2 left-16 h-12 object-contain hidden" alt="電子簽名">
+            <p class="border-b border-slate-400 w-56">報價人員：<span id="pdfSalesName">黃信傑</span></p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -211,27 +233,19 @@
 
     let modulesData = [];
     let selectedItems = {};
-    let customItems = []; // 儲存動態新增的客製項目
+    let customItems = [];
+    let signatureDataUrl = ''; // 儲存簽名圖片 base64
 
-    // 初始化：讀取 Google Sheets CSV
     window.onload = function() {
       Papa.parse(CSV_URL, {
         download: true,
         header: true,
         complete: function(results) {
-          // 💡 自動過濾無效資料與警語（只保留包含標準模組編號如 A-01, B-02... 的項目）
           const codeRegex = /^[A-Z]-\d+/i;
           modulesData = results.data.filter(r => r['模組編號'] && codeRegex.test(r['模組編號'].trim()));
 
           document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
           document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
-          
-          // 預設勾選必選項目
-          modulesData.forEach(m => {
-            if (m['選配屬性'] === '必選') {
-              selectedItems[m['模組編號']] = { selected: true, qty: 1 };
-            }
-          });
 
           renderModules();
           updatePreview();
@@ -243,7 +257,6 @@
       });
     };
 
-    // 渲染標準模組挑選清單
     function renderModules() {
       const container = document.getElementById('moduleCategories');
       container.innerHTML = '';
@@ -258,13 +271,12 @@
           const id = item['模組編號'];
           const isSelected = selectedItems[id]?.selected || false;
           const qty = selectedItems[id]?.qty || 1;
-          const isRequired = item['選配屬性'] === '必選';
           const price = Number((item['標準售價(NTD)'] || '0').replace(/,/g, '')) || 0;
 
           html += `
             <div class="flex items-center justify-between bg-white p-2.5 rounded border text-sm">
               <div class="flex items-start gap-2 flex-1 pr-2">
-                <input type="checkbox" id="chk_${id}" ${isSelected ? 'checked' : ''} ${isRequired ? 'disabled' : ''} onchange="toggleSelect('${id}')" class="mt-1 rounded text-blue-600">
+                <input type="checkbox" id="chk_${id}" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${id}')" class="mt-1 rounded text-blue-600 cursor-pointer">
                 <div>
                   <label for="chk_${id}" class="font-semibold text-slate-800 cursor-pointer">${item['項目名稱']} <span class="text-xs text-slate-400">(${id})</span></label>
                   <p class="text-xs text-slate-500">${item['規格與功能說明']}</p>
@@ -283,7 +295,30 @@
       });
     }
 
-    // 💡 新增客製化項目
+    // 💡 處理簽名檔上傳
+    function handleSignatureUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          signatureDataUrl = e.target.result;
+          const img = document.getElementById('pdfSignatureImg');
+          img.src = signatureDataUrl;
+          img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // 💡 清除簽名檔
+    function clearSignature() {
+      signatureDataUrl = '';
+      document.getElementById('signatureInput').value = '';
+      const img = document.getElementById('pdfSignatureImg');
+      img.src = '';
+      img.classList.add('hidden');
+    }
+
     function addCustomItem() {
       customItems.push({
         id: 'CUST_' + Date.now(),
@@ -298,14 +333,12 @@
       updatePreview();
     }
 
-    // 💡 移除客製化項目
     function removeCustomItem(index) {
       customItems.splice(index, 1);
       renderCustomItems();
       updatePreview();
     }
 
-    // 💡 渲染客製化項目清單UI
     function renderCustomItems() {
       const container = document.getElementById('customItemsList');
       container.innerHTML = '';
@@ -343,7 +376,6 @@
       }
     }
 
-    // 計算總額與更新預覽
     function updatePreview() {
       let totalRevenue = 0;
       let totalCost = 0;
@@ -354,7 +386,6 @@
       pdfBody.innerHTML = '';
       selectedListUI.innerHTML = '';
 
-      // 1. 計算標準模組項目
       modulesData.forEach(item => {
         const id = item['模組編號'];
         const sel = selectedItems[id];
@@ -386,7 +417,6 @@
         }
       });
 
-      // 2. 計算客製化新增項目
       customItems.forEach(cItem => {
         count++;
         const qty = cItem.qty || 1;
@@ -416,7 +446,6 @@
       const totalMargin = totalRevenue - totalCost;
       const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
 
-      // 更新看板與預覽
       document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
       document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
       document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
@@ -429,6 +458,7 @@
       document.getElementById('pdfQuoteDate').innerText = document.getElementById('quoteDate').value;
       document.getElementById('pdfGlueSpec').innerText = document.getElementById('glueSpec').value;
       document.getElementById('pdfPaymentTerm').innerText = document.getElementById('paymentTerm').value;
+      document.getElementById('pdfSalesName').innerText = document.getElementById('salesName').value;
 
       const tax = Math.round(totalRevenue * 0.05);
       document.getElementById('pdfSubtotal').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
@@ -441,17 +471,24 @@
       document.getElementById('internalCalcBox').style.display = showInternal ? 'block' : 'none';
     }
 
-    // 匯出 PDF
     function exportPDF() {
       const element = document.getElementById('pdfContent');
       const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
       const custName = document.getElementById('custName').value || 'Customer';
 
+      window.scrollTo(0, 0);
+
       const opt = {
         margin:       0,
         filename:     `${custName}_報價單_${quoteNo}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          scrollY: 0, 
+          scrollX: 0,
+          logging: false 
+        },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 

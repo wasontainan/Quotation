@@ -84,7 +84,7 @@
         </div>
       </div>
 
-      <!-- 💡 新增：報價單附件上傳（機構圖/設備示意圖） -->
+      <!-- 報價單附件上傳（機構圖/設備示意圖） -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-emerald-200 bg-emerald-50/20">
         <h2 class="font-bold text-lg text-emerald-900 border-b border-emerald-200 pb-2 mb-4 flex items-center justify-between">
           <span>📷 報價單附件 (機構圖 / 設備示意圖)</span>
@@ -173,24 +173,9 @@
     <!-- 第一頁：主報價單 -->
     <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
       
-      <!-- 公司 LOGO 與完整抬頭標頭區 -->
-      <div class="border-b-2 border-slate-800 pb-3 mb-3">
-        <div class="flex justify-between items-center mb-2">
-          <div class="flex items-center gap-3">
-            <div class="text-blue-900 font-extrabold text-xl tracking-tight flex items-center gap-2">
-              <span class="border-2 border-blue-900 px-1.5 py-0.5 rounded text-base">WASON</span>
-              <span>華勝科技股份有限公司</span>
-            </div>
-          </div>
-          <div class="text-right text-[10px] text-slate-600 leading-tight">
-            <p class="font-semibold">335桃園市大溪區介壽路328號</p>
-            <p>No. 328, Jieshou Rd., Daxi Dist., Taoyuan City 335, Taiwan</p>
-          </div>
-        </div>
-        <div class="flex justify-between items-center text-[10px] text-slate-600 pt-1 border-t border-slate-200">
-          <p>T: +886-3-390-6300 &nbsp;|&nbsp; F: +886-3-389-4321</p>
-          <p>E: sales@wason.com.tw &nbsp;|&nbsp; <span class="text-blue-800 font-semibold">www.wason.com.tw</span></p>
-        </div>
+      <!-- 💡 公司原本抬頭圖檔（直接嵌入） -->
+      <div class="border-b-2 border-slate-800 pb-2 mb-3">
+        <img src="https://i.imgur.com/vH9x4Nl.png" id="companyHeaderImg" alt="華勝科技股份有限公司" class="w-full h-auto object-contain" crossorigin="anonymous">
       </div>
 
       <!-- 報價單標題與單號資訊 -->
@@ -281,7 +266,7 @@
         </div>
       </div>
 
-      <!-- 💡 第二頁（或延伸頁）：獨立附件圖片渲染區 -->
+      <!-- 第二頁（或延伸頁）：獨立附件圖片渲染區 -->
       <div id="pdfAttachmentsContainer" class="hidden">
         <!-- 動態帶入附件分頁 -->
       </div>
@@ -290,6 +275,9 @@
   </div>
 
   <script>
+    // 您上傳的標頭圖檔 Data URI (自動替換)
+    const HEADER_IMAGE_DATA_URI = "https://i.imgur.com/vH9x4Nl.png";
+
     // 您的 Google Sheets 發布 CSV 網址
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5qPZidqe2n-fslBjxj3Cs-LBwur1xRjngS6c93mzzjQkkAYXZBsCTP26GDd2Z0y8YBNLv-L3sBJmq/pub?gid=1765616625&single=true&output=csv';
 
@@ -297,9 +285,15 @@
     let selectedItems = {};
     let customItems = [];
     let signatureDataUrl = '';
-    let attachmentFiles = []; // 儲存上傳的附件圖片列表
+    let attachmentFiles = [];
 
     window.onload = function() {
+      // 載入公司抬頭圖
+      const headerImg = document.getElementById('companyHeaderImg');
+      if (HEADER_IMAGE_DATA_URI) {
+        headerImg.src = HEADER_IMAGE_DATA_URI;
+      }
+
       Papa.parse(CSV_URL, {
         download: true,
         header: true,
@@ -358,7 +352,7 @@
       });
     }
 
-    // 💡 處理電子簽名檔圖片上傳與預覽
+    // 處理電子簽名檔圖片上傳與預覽
     function handleSignatureUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -393,7 +387,7 @@
       document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
     }
 
-    // 💡 處理報價單附件圖片上傳
+    // 處理報價單附件圖片上傳
     function handleAttachmentsUpload(event) {
       const files = Array.from(event.target.files);
       files.forEach(file => {
@@ -558,7 +552,7 @@
         `;
       });
 
-      // 💡 渲染 PDF 附件頁面（自動從第二頁分頁呈現）
+      // 渲染 PDF 附件頁面
       const pdfAttContainer = document.getElementById('pdfAttachmentsContainer');
       pdfAttContainer.innerHTML = '';
 

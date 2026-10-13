@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>G-180 模組化報價系統</title>
+  <title>報價系統 - 華勝科技</title>
   <!-- Tailwind CSS 樣式庫 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- PapaParse 用於解析 CSV -->
@@ -16,7 +16,7 @@
       body { background: white !important; }
       .pdf-page { shadow: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; }
     }
-    .pdf-page { width: 210mm; min-height: 297mm; padding: 15mm; background: white; margin: auto; box-sizing: border-box; }
+    .pdf-page { width: 210mm; min-height: 297mm; padding: 12mm; background: white; margin: auto; box-sizing: border-box; }
   </style>
 </head>
 <body class="bg-slate-100 font-sans text-slate-800">
@@ -25,7 +25,7 @@
   <header class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md no-print">
     <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
       <h1 class="text-xl font-bold flex items-center gap-2">
-        <span>⚙️ G-180 模組化報價系統</span>
+        <span>⚙️ 華勝科技 模組化報價系統</span>
       </h1>
       <div class="flex items-center gap-3">
         <label class="flex items-center gap-1.5 text-sm cursor-pointer bg-slate-700 px-3 py-1.5 rounded hover:bg-slate-600">
@@ -57,21 +57,21 @@
         </div>
       </div>
 
-      <!-- 💡 獨立區塊：報價人員與電子簽名檔上傳 -->
+      <!-- 報價人員與電子簽名檔上傳 -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 bg-blue-50/20">
         <h2 class="font-bold text-lg text-blue-900 border-b border-blue-200 pb-2 mb-4 flex items-center gap-2">
-          <span>✍️ 報價人員與電子簽名檔</span>
+          <span>✍️ 報價簽核與電子簽名檔</span>
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm items-start">
           <div>
-            <label class="block text-slate-600 font-medium mb-1">報價人員姓名</label>
-            <input type="text" id="salesName" value="黃信傑" oninput="updatePreview()" class="w-full border rounded p-2 font-semibold text-slate-800">
+            <label class="block text-slate-600 font-medium mb-1">報價人員姓名 (選填)</label>
+            <input type="text" id="salesName" placeholder="如需文字請輸入，否則空白" oninput="updatePreview()" class="w-full border rounded p-2 text-slate-800">
           </div>
           <div>
-            <label class="block text-slate-600 font-medium mb-1">上傳簽名檔圖片 (PNG/JPG)</label>
+            <label class="block text-slate-600 font-medium mb-1">上傳電子簽名檔 (圖片)</label>
             <input type="file" id="signatureInput" accept="image/*" onchange="handleSignatureUpload(event)" class="w-full text-xs text-slate-500 border rounded p-1.5 bg-white cursor-pointer">
             <div class="flex items-center justify-between mt-2">
-              <span id="sigUploadStatus" class="text-xs text-slate-400">尚未上傳圖片</span>
+              <span id="sigUploadStatus" class="text-xs text-slate-400">尚未上傳簽名圖片</span>
               <button onclick="clearSignature()" class="text-xs text-red-600 font-semibold hover:underline bg-red-50 px-2 py-1 rounded">✕ 清除簽名</button>
             </div>
             <!-- 表單側預覽 -->
@@ -153,11 +153,34 @@
   
   <div class="p-4 bg-slate-200 overflow-x-auto">
     <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
-      <!-- 報價單 Header -->
-      <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
+      
+      <!-- 💡 公司 LOGO 與完整抬頭標頭區 -->
+      <div class="border-b-2 border-slate-800 pb-3 mb-3">
+        <div class="flex justify-between items-center mb-2">
+          <!-- 華勝科技圖片 LOGO 與完整聯絡資訊 -->
+          <div class="flex items-center gap-3">
+            <div class="text-blue-900 font-extrabold text-xl tracking-tight flex items-center gap-2">
+              <span class="border-2 border-blue-900 px-1.5 py-0.5 rounded text-base">WASON</span>
+              <span>華勝科技股份有限公司</span>
+            </div>
+          </div>
+          <div class="text-right text-[10px] text-slate-600 leading-tight">
+            <p class="font-semibold">335桃園市大溪區介壽路328號</p>
+            <p>No. 328, Jieshou Rd., Daxi Dist., Taoyuan City 335, Taiwan</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-[10px] text-slate-600 pt-1 border-t border-slate-200">
+          <p>T: +886-3-390-6300 &nbsp;|&nbsp; F: +886-3-389-4321</p>
+          <p>E: sales@wason.com.tw &nbsp;|&nbsp; <span class="text-blue-800 font-semibold">www.wason.com.tw</span></p>
+        </div>
+      </div>
+
+      <!-- 💡 報價單標題與單號資訊 -->
+      <div class="flex justify-between items-end mb-3">
         <div>
-          <h1 class="text-2xl font-bold tracking-wide text-slate-900">華勝科技股份有限公司</h1>
-          <p class="text-xs text-slate-500 mt-1">G-180 雙液灌膠機 標準報價單 (Quotation)</p>
+          <h2 class="text-xl font-bold tracking-wider text-slate-900">報價單 (Quotation)</h2>
+          <!-- 💡 依需求新增致謝文字 -->
+          <p class="text-xs text-slate-600 mt-1 italic font-medium">很榮幸能夠有這個機會提供我方的報價給您，請參照：</p>
         </div>
         <div class="text-right text-xs text-slate-600">
           <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
@@ -224,7 +247,7 @@
         <p>4. 備品:隨機附贈混合管20支、膠閥油封1套</p>
       </div>
 
-      <!-- 💡 簽核區結構（包含圖片獨立渲染） -->
+      <!-- 💡 依需求修正的簽核區（無預設名字，簽名檔獨立位於橫線上） -->
       <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
         <div>
           <p class="mb-14">客戶確認簽章：</p>
@@ -232,12 +255,12 @@
         </div>
         <div>
           <p class="mb-2">報價單位：華勝科技股份有限公司</p>
-          <div class="w-56 border-b border-slate-400 pb-1">
-            <!-- 簽名檔圖片專屬位置 -->
-            <div class="h-12 flex items-center justify-start mb-1 overflow-hidden">
+          <div class="w-56">
+            <p class="mb-1">報價人員：<span id="pdfSalesName"></span></p>
+            <!-- 簽名檔專屬區域（位於橫線上方） -->
+            <div class="relative h-14 border-b border-slate-400 flex items-center justify-center">
               <img id="pdfSignatureImg" class="max-h-12 max-w-full object-contain hidden" alt="電子簽名">
             </div>
-            <p>報價人員：<span id="pdfSalesName">黃信傑</span></p>
           </div>
         </div>
       </div>
@@ -320,16 +343,14 @@
         reader.onload = function(e) {
           signatureDataUrl = e.target.result;
           
-          // 1. 設定 PDF 報價單內的圖片
           const pdfImg = document.getElementById('pdfSignatureImg');
           pdfImg.src = signatureDataUrl;
           pdfImg.classList.remove('hidden');
 
-          // 2. 設定表單區的預覽小圖
           const formImg = document.getElementById('formSigPreviewImg');
           formImg.src = signatureDataUrl;
           document.getElementById('formSigPreviewBox').classList.remove('hidden');
-          document.getElementById('sigUploadStatus').innerText = '✅ 圖片已載入';
+          document.getElementById('sigUploadStatus').innerText = '✅ 簽名檔已載入';
           document.getElementById('sigUploadStatus').className = 'text-xs text-emerald-600 font-semibold';
         };
         reader.readAsDataURL(file);
@@ -346,7 +367,7 @@
       pdfImg.classList.add('hidden');
 
       document.getElementById('formSigPreviewBox').classList.add('hidden');
-      document.getElementById('sigUploadStatus').innerText = '尚未上傳圖片';
+      document.getElementById('sigUploadStatus').innerText = '尚未上傳簽名圖片';
       document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
     }
 

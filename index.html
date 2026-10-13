@@ -295,14 +295,28 @@
             skipEmptyLines: 'greedy', // 忽略空白列
             complete: function(results) {
               try {
-                // 寬鬆過濾：只要「模組編號」欄位有值就顯示，不再限制特定格式 (防呆處理)
+                // 💡 智慧過濾條件：避開注意事項，但不過度限制編號格式
                 modulesData = results.data.filter(r => {
-                  const id = r['模組編號'] || r['模組編號 ']; // 防止多出空白
-                  return id && String(id).trim() !== '';
+                  const id = String(r['模組編號'] || r['模組編號 '] || '').trim();
+                  const name = String(r['項目名稱'] || '').trim();
+                  
+                  // 1. 如果編號是空的，跳過
+                  if (!id) return false;
+                  
+                  // 2. 如果名稱是空的 (通常是注意事項整列合併)，跳過
+                  if (!name) return false;
+                  
+                  // 3. 如果編號過長 (正常編號不會超過 30 字，通常是把句子寫在欄位裡了)，跳過
+                  if (id.length > 30) return false;
+                  
+                  // 4. 過濾掉含有特殊警告符號的說明文字
+                  if (id.includes('⚠') || id.includes('注意')) return false;
+
+                  return true;
                 });
 
                 if(modulesData.length === 0) {
-                  throw new Error("表格內沒有找到任何包含『模組編號』的項目，請確認試算表欄位名稱。");
+                  throw new Error("沒有找到有效的模組資料，請確認試算表格式。");
                 }
 
                 document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
@@ -343,13 +357,13 @@
 
         catItems.forEach(item => {
           const id = String(item['模組編號'] || '').trim();
-          const name = item['項目名稱'] || '未命名項目';
+          const name = item['項目名稱'] || '';
           const spec = item['規格與功能說明'] || '';
           
           const isSelected = selectedItems[id]?.selected || false;
           const qty = selectedItems[id]?.qty || 1;
           
-          // 安全轉換數字，避免 Replace is not a function 錯誤
+          // 安全轉換數字
           const priceStr = String(item['標準售價(NTD)'] || '0').replace(/,/g, '');
           const price = Number(priceStr) || 0;
 

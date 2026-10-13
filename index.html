@@ -124,7 +124,7 @@
 
     </div>
 
-    <!-- 右側：即時成本/毛利與摘要試算 (基於含稅總額的折扣與總額調整) -->
+    <!-- 右側：即時成本/毛利與摘要試算 (含詳細備註) -->
     <div class="lg:col-span-5 space-y-6">
       <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20 space-y-4">
         <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📊 報價金額與利潤試算</h2>
@@ -147,6 +147,10 @@
               <input type="number" id="discountValue" value="0" min="0" oninput="updatePreview()" class="w-full border rounded p-1.5 text-right font-medium">
             </div>
           </div>
+          <!-- 💡 新增的備註說明 -->
+          <p class="text-[10px] text-indigo-700 bg-indigo-50 p-1.5 rounded border border-indigo-100">
+            💡 <b>百分比備註：</b>可輸入 <b>9</b> 或 <b>0.9</b> 代表 9 折（若大於 1 系統會自動除以 10 計算）。
+          </p>
 
           <div>
             <label class="block text-slate-600 mb-1">手動指定含稅整數總額 (選填，覆寫試算結果)</label>
@@ -261,7 +265,7 @@
           <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200"></tbody>
         </table>
 
-        <!-- 金額總計 (調整字體大小層級) -->
+        <!-- 金額總計 -->
         <div class="flex justify-end mb-6">
           <div class="w-72 space-y-1 text-right">
             <!-- 專案折扣 (含稅)：text-sm 粗體 -->
@@ -279,7 +283,7 @@
               <span>營業稅 (5% Tax)：</span>
               <span id="pdfTax" class="font-medium text-slate-800">NT$ 0</span>
             </div>
-            <!-- 報價總額：text-sm 粗體 (與專案折扣同大小) -->
+            <!-- 報價總額：text-sm 粗體 -->
             <div class="flex justify-between items-center py-1 font-bold text-sm text-blue-900">
               <span>報價總額 (Total)：</span>
               <span id="pdfTotal">NT$ 0</span>

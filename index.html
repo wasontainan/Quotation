@@ -53,16 +53,33 @@
         </div>
       </div>
 
-      <!-- 模組挑選區 -->
+      <!-- 標準模組挑選區 -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
         <div class="flex justify-between items-center border-b pb-2 mb-4">
-          <h2 class="font-bold text-lg text-slate-700">🧩 設備與模組選購</h2>
+          <h2 class="font-bold text-lg text-slate-700">🧩 標準設備與模組選購</h2>
           <span id="loadingStatus" class="text-xs text-blue-600 font-medium">載入價格庫中...</span>
         </div>
         <div id="moduleCategories" class="space-y-6">
           <!-- 動態載入分類項目 -->
         </div>
       </div>
+
+      <!-- 💡 客製化 / 臨時手動新增品項區 -->
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-amber-200 bg-amber-50/20">
+        <div class="flex justify-between items-center border-b border-amber-200 pb-2 mb-4">
+          <h2 class="font-bold text-lg text-amber-800 flex items-center gap-1.5">
+            <span>🛠️ 非標 / 客製化新增項目</span>
+          </h2>
+          <button onclick="addCustomItem()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded shadow font-medium transition">
+            ＋ 新增客製項目
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mb-3">非標準模組庫內的項目（如工程手續費、專用客製治具等），可在這裡直接填寫：</p>
+        <div id="customItemsList" class="space-y-3">
+          <!-- 動態新增客製項目列 -->
+        </div>
+      </div>
+
     </div>
 
     <!-- 右側：即時成本/毛利與摘要試算 (5 欄) -->
@@ -194,6 +211,7 @@
 
     let modulesData = [];
     let selectedItems = {};
+    let customItems = []; // 儲存動態新增的客製項目
 
     // 初始化：讀取 Google Sheets CSV
     window.onload = function() {
@@ -201,14 +219,17 @@
         download: true,
         header: true,
         complete: function(results) {
-          modulesData = results.data.filter(r => r['模組編號'] && r['模組編號'].trim() !== '');
+          // 💡 自動過濾無效資料與警語（只保留包含標準模組編號如 A-01, B-02... 的項目）
+          const codeRegex = /^[A-Z]-\d+/i;
+          modulesData = results.data.filter(r => r['模組編號'] && codeRegex.test(r['模組編號'].trim()));
+
           document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
           document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
           
           // 預設勾選必選項目
           modulesData.forEach(m => {
             if (m['選配屬性'] === '必選') {
-              selectedItems[m['模組編號']] = { selected: true, qty: 1, customPrice: null };
+              selectedItems[m['模組編號']] = { selected: true, qty: 1 };
             }
           });
 
@@ -222,7 +243,7 @@
       });
     };
 
-    // 渲染模組挑選清單
+    // 渲染標準模組挑選清單
     function renderModules() {
       const container = document.getElementById('moduleCategories');
       container.innerHTML = '';
@@ -262,6 +283,52 @@
       });
     }
 
+    // 💡 新增客製化項目
+    function addCustomItem() {
+      customItems.push({
+        id: 'CUST_' + Date.now(),
+        name: '客製化項目',
+        spec: '依客戶規格客製',
+        unit: '項',
+        qty: 1,
+        cost: 0,
+        price: 0
+      });
+      renderCustomItems();
+      updatePreview();
+    }
+
+    // 💡 移除客製化項目
+    function removeCustomItem(index) {
+      customItems.splice(index, 1);
+      renderCustomItems();
+      updatePreview();
+    }
+
+    // 💡 渲染客製化項目清單UI
+    function renderCustomItems() {
+      const container = document.getElementById('customItemsList');
+      container.innerHTML = '';
+
+      customItems.forEach((item, index) => {
+        container.innerHTML += `
+          <div class="bg-white p-3 rounded border border-amber-200 text-xs space-y-2">
+            <div class="flex justify-between items-center gap-2">
+              <input type="text" value="${item.name}" placeholder="項目名稱" oninput="customItems[${index}].name = this.value; updatePreview();" class="font-bold border rounded p-1 flex-1">
+              <button onclick="removeCustomItem(${index})" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">✕ 刪除</button>
+            </div>
+            <input type="text" value="${item.spec}" placeholder="規格說明" oninput="customItems[${index}].spec = this.value; updatePreview();" class="w-full border rounded p-1 text-slate-500">
+            <div class="grid grid-cols-4 gap-2 pt-1">
+              <div><label class="text-[10px] text-slate-400 block">數量</label><input type="number" min="1" value="${item.qty}" oninput="customItems[${index}].qty = Math.max(1, parseInt(this.value)||1); updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">單位</label><input type="text" value="${item.unit}" oninput="customItems[${index}].unit = this.value; updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">成本(NTD)</label><input type="number" value="${item.cost}" oninput="customItems[${index}].cost = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right"></div>
+              <div><label class="text-[10px] text-slate-400 block">售價(NTD)</label><input type="number" value="${item.price}" oninput="customItems[${index}].price = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right font-bold text-amber-900"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
     function toggleSelect(id) {
       if (!selectedItems[id]) selectedItems[id] = { selected: false, qty: 1 };
       selectedItems[id].selected = !selectedItems[id].selected;
@@ -287,6 +354,7 @@
       pdfBody.innerHTML = '';
       selectedListUI.innerHTML = '';
 
+      // 1. 計算標準模組項目
       modulesData.forEach(item => {
         const id = item['模組編號'];
         const sel = selectedItems[id];
@@ -303,10 +371,8 @@
           totalRevenue += itemSubtotal;
           totalCost += itemCostTotal;
 
-          // 更新右側選取清單
           selectedListUI.innerHTML += `<li class="flex justify-between"><span>${item['項目名稱']} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
 
-          // 更新 PDF 報價明細
           pdfBody.innerHTML += `
             <tr>
               <td class="p-2 text-center">${count}</td>
@@ -320,17 +386,43 @@
         }
       });
 
+      // 2. 計算客製化新增項目
+      customItems.forEach(cItem => {
+        count++;
+        const qty = cItem.qty || 1;
+        const price = cItem.price || 0;
+        const cost = cItem.cost || 0;
+
+        const itemSubtotal = price * qty;
+        const itemCostTotal = cost * qty;
+
+        totalRevenue += itemSubtotal;
+        totalCost += itemCostTotal;
+
+        selectedListUI.innerHTML += `<li class="flex justify-between text-amber-700"><span>[客製] ${cItem.name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+        pdfBody.innerHTML += `
+          <tr>
+            <td class="p-2 text-center">${count}</td>
+            <td class="p-2"><div class="font-semibold text-amber-900">${cItem.name}</div><div class="text-[10px] text-slate-500">${cItem.spec}</div></td>
+            <td class="p-2 text-center">${qty}</td>
+            <td class="p-2 text-center">${cItem.unit}</td>
+            <td class="p-2 text-right">${price.toLocaleString()}</td>
+            <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
       const totalMargin = totalRevenue - totalCost;
       const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
 
-      // 更新數字看板
+      // 更新看板與預覽
       document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
       document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
       document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
       document.getElementById('statMarginRate').innerText = `${marginRate}%`;
       document.getElementById('selectedCount').innerText = count;
 
-      // 更新 PDF 同步資訊
       document.getElementById('pdfCustName').innerText = document.getElementById('custName').value;
       document.getElementById('pdfCustContact').innerText = document.getElementById('custContact').value;
       document.getElementById('pdfQuoteNo').innerText = document.getElementById('quoteNo').value;

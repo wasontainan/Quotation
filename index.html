@@ -53,6 +53,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
           <div><label class="block text-slate-500 mb-1">客戶名稱</label><input type="text" id="custName" value="大瓏企業股份有限公司" oninput="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">聯絡人員</label><input type="text" id="custContact" value="Kevin Liang 梁震威" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">客戶電話</label><input type="text" id="custPhone" value="03-328XXXX" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+          <div><label class="block text-slate-500 mb-1">客戶 Email</label><input type="text" id="custEmail" value="kevin_liang@dalong.com" oninput="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">報價單號</label><input type="text" id="quoteNo" value="TY250109P" oninput="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">報價日期</label><input type="date" id="quoteDate" value="2025-01-09" onchange="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">膠種 / 比例</label><input type="text" id="glueSpec" value="AB膠 (100:20 / 15cc/秒)" oninput="updatePreview()" class="w-full border rounded p-2"></div>
@@ -122,36 +124,73 @@
 
     </div>
 
-    <!-- 右側：即時成本/毛利與摘要試算 -->
+    <!-- 右側：即時成本/毛利與摘要試算 (折扣與總額調整) -->
     <div class="lg:col-span-5 space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20">
-        <h2 class="font-bold text-lg text-slate-700 border-b pb-2 mb-4">📊 報價金額與利潤試算</h2>
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20 space-y-4">
+        <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📊 報價金額與利潤試算</h2>
         
-        <div class="space-y-3">
-          <div class="flex justify-between text-slate-600">
-            <span>未稅報價總額 (Revenue)</span>
-            <span id="statRevenue" class="font-bold text-slate-900 text-lg">NT$ 0</span>
+        <!-- 折扣與總額調整設定區 -->
+        <div class="bg-indigo-50/40 p-3.5 rounded-md border border-indigo-100 space-y-3 text-xs">
+          <h3 class="font-bold text-indigo-900">🏷️ 優惠折扣與總額調整</h3>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-slate-600 mb-1">折扣類型</label>
+              <select id="discountType" onchange="updatePreview()" class="w-full border rounded p-1.5 bg-white">
+                <option value="none">無折扣</option>
+                <option value="amount">金額折讓 (元)</option>
+                <option value="percent">百分比折扣 (折)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">折扣數值</label>
+              <input type="number" id="discountValue" value="0" min="0" oninput="updatePreview()" class="w-full border rounded p-1.5 text-right font-medium">
+            </div>
           </div>
 
-          <div id="internalCalcBox" class="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
-            <div class="flex justify-between text-sm text-slate-600">
+          <div>
+            <label class="block text-slate-600 mb-1">手動指定整數總額 (選填，覆寫試算結果)</label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="manualTotal" placeholder="例如: 1500000" oninput="updatePreview()" class="w-full border rounded p-1.5 text-right font-bold text-blue-900">
+              <button onclick="document.getElementById('manualTotal').value=''; updatePreview();" class="text-red-500 hover:underline px-1 text-xs">清除</button>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-0.5">若需提供客人完美的整數報價，可直接在此輸入。</p>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t">
+          <div class="flex justify-between text-slate-600">
+            <span>原未稅小計 (Original)</span>
+            <span id="statOriginalRevenue" class="font-semibold text-slate-700">NT$ 0</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>折讓/折扣金額</span>
+            <span id="statDiscountAmount" class="font-semibold text-red-600">- NT$ 0</span>
+          </div>
+          <div class="flex justify-between text-slate-600 text-sm font-bold">
+            <span>最終未稅報價總額 (Revenue)</span>
+            <span id="statRevenue" class="text-blue-900 text-base">NT$ 0</span>
+          </div>
+
+          <div id="internalCalcBox" class="bg-slate-50 p-3 rounded border border-slate-200 space-y-1.5 mt-3">
+            <div class="flex justify-between text-xs text-slate-600">
               <span>預估總成本 (Cost)</span>
               <span id="statCost" class="font-semibold text-slate-700">NT$ 0</span>
             </div>
-            <div class="flex justify-between text-sm text-slate-600">
+            <div class="flex justify-between text-xs text-slate-600">
               <span>預估毛利 (Margin)</span>
               <span id="statMargin" class="font-semibold text-emerald-600">NT$ 0</span>
             </div>
-            <div class="flex justify-between text-sm text-slate-600">
+            <div class="flex justify-between text-xs text-slate-600">
               <span>整體毛利率 (%)</span>
               <span id="statMarginRate" class="font-bold text-emerald-600">0%</span>
             </div>
           </div>
         </div>
 
-        <div class="mt-6">
+        <div class="mt-4 pt-2 border-t">
           <h3 class="font-semibold text-sm text-slate-500 mb-2">已選項目清單 (<span id="selectedCount">0</span>)</h3>
-          <ul id="selectedList" class="text-xs space-y-1.5 max-h-60 overflow-y-auto border-t pt-2 text-slate-600"></ul>
+          <ul id="selectedList" class="text-xs space-y-1.5 max-h-44 overflow-y-auto text-slate-600"></ul>
         </div>
       </div>
     </div>
@@ -188,9 +227,11 @@
           <div>
             <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
             <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
-            <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
+            <p><span class="text-slate-500">連絡電話：</span><span id="pdfCustPhone"></span></p>
+            <p><span class="text-slate-500">電子信箱：</span><span id="pdfCustEmail"></span></p>
           </div>
           <div>
+            <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
             <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
             <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
             <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
@@ -209,14 +250,16 @@
               <th class="p-2 text-right w-24">小計 (NTD)</th>
             </tr>
           </thead>
-          <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
-            <!-- 動態帶入 -->
-          </tbody>
+          <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200"></tbody>
         </table>
 
         <!-- 金額總計 -->
         <div class="flex justify-end mb-6">
-          <div class="w-64 space-y-1 text-xs text-right">
+          <div class="w-72 space-y-1 text-xs text-right">
+            <div id="pdfDiscountRow" class="flex justify-between py-1 border-b hidden text-red-700">
+              <span id="pdfDiscountLabel">專案折扣：</span>
+              <span id="pdfDiscountAmountText">- NT$ 0</span>
+            </div>
             <div class="flex justify-between py-1 border-b">
               <span class="text-slate-500">未稅總額 (Subtotal)：</span>
               <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
@@ -265,15 +308,12 @@
       </div>
 
       <!-- 第二頁（或延伸頁）：獨立附件圖片渲染區 -->
-      <div id="pdfAttachmentsContainer" class="hidden">
-        <!-- 動態帶入附件分頁 -->
-      </div>
+      <div id="pdfAttachmentsContainer" class="hidden"></div>
 
     </div>
   </div>
 
   <script>
-    // 您的 Google Sheets 發布 CSV 網址
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5qPZidqe2n-fslBjxj3Cs-LBwur1xRjngS6c93mzzjQkkAYXZBsCTP26GDd2Z0y8YBNLv-L3sBJmq/pub?gid=1765616625&single=true&output=csv';
 
     let modulesData = [];
@@ -283,7 +323,6 @@
     let attachmentFiles = [];
 
     window.onload = function() {
-      // 使用 fetch 進行安全抓取並附帶錯誤偵測
       fetch(CSV_URL)
         .then(response => {
           if (!response.ok) throw new Error("HTTP 狀態碼錯誤: " + response.status);
@@ -292,26 +331,14 @@
         .then(csvText => {
           Papa.parse(csvText, {
             header: true,
-            skipEmptyLines: 'greedy', // 忽略空白列
+            skipEmptyLines: 'greedy',
             complete: function(results) {
               try {
-                // 💡 智慧過濾條件：避開注意事項，但不過度限制編號格式
                 modulesData = results.data.filter(r => {
                   const id = String(r['模組編號'] || r['模組編號 '] || '').trim();
                   const name = String(r['項目名稱'] || '').trim();
-                  
-                  // 1. 如果編號是空的，跳過
-                  if (!id) return false;
-                  
-                  // 2. 如果名稱是空的 (通常是注意事項整列合併)，跳過
-                  if (!name) return false;
-                  
-                  // 3. 如果編號過長 (正常編號不會超過 30 字，通常是把句子寫在欄位裡了)，跳過
-                  if (id.length > 30) return false;
-                  
-                  // 4. 過濾掉含有特殊警告符號的說明文字
+                  if (!id || !name || id.length > 30) return false;
                   if (id.includes('⚠') || id.includes('注意')) return false;
-
                   return true;
                 });
 
@@ -331,14 +358,12 @@
               }
             },
             error: function(err) {
-              console.error("PapaParse 解析錯誤:", err);
               document.getElementById('loadingStatus').innerText = '❌ 價格庫解析失敗';
               document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-red-500');
             }
           });
         })
         .catch(err => {
-          console.error("網路連線錯誤:", err);
           document.getElementById('loadingStatus').innerText = '❌ 網路連線錯誤，無法載入價格庫';
           document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-red-500');
         });
@@ -348,7 +373,6 @@
       const container = document.getElementById('moduleCategories');
       container.innerHTML = '';
 
-      // 安全取得類別
       const categories = [...new Set(modulesData.map(m => (m['模組類別'] || '未分類').trim()))];
 
       categories.forEach(cat => {
@@ -362,10 +386,7 @@
           
           const isSelected = selectedItems[id]?.selected || false;
           const qty = selectedItems[id]?.qty || 1;
-          
-          // 安全轉換數字
-          const priceStr = String(item['標準售價(NTD)'] || '0').replace(/,/g, '');
-          const price = Number(priceStr) || 0;
+          const price = Number(String(item['標準售價(NTD)'] || '0').replace(/,/g, '')) || 0;
 
           html += `
             <div class="flex items-center justify-between bg-white p-2.5 rounded border text-sm">
@@ -395,7 +416,6 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           signatureDataUrl = e.target.result;
-          
           const pdfImg = document.getElementById('pdfSignatureImg');
           pdfImg.src = signatureDataUrl;
           pdfImg.classList.remove('hidden');
@@ -413,11 +433,9 @@
     function clearSignature() {
       signatureDataUrl = '';
       document.getElementById('signatureInput').value = '';
-      
       const pdfImg = document.getElementById('pdfSignatureImg');
       pdfImg.src = '';
       pdfImg.classList.add('hidden');
-
       document.getElementById('formSigPreviewBox').classList.add('hidden');
       document.getElementById('sigUploadStatus').innerText = '尚未上傳簽名圖片';
       document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
@@ -449,7 +467,6 @@
     function renderAttachmentsList() {
       const container = document.getElementById('attachmentsPreviewList');
       container.innerHTML = '';
-
       attachmentFiles.forEach((att) => {
         container.innerHTML += `
           <div class="flex items-center justify-between bg-white p-2 rounded border text-xs">
@@ -486,7 +503,6 @@
     function renderCustomItems() {
       const container = document.getElementById('customItemsList');
       container.innerHTML = '';
-
       customItems.forEach((item, index) => {
         container.innerHTML += `
           <div class="bg-white p-3 rounded border border-amber-200 text-xs space-y-2">
@@ -521,7 +537,7 @@
     }
 
     function updatePreview() {
-      let totalRevenue = 0;
+      let rawRevenue = 0;
       let totalCost = 0;
       let count = 0;
 
@@ -537,11 +553,8 @@
         if (sel && sel.selected) {
           count++;
           const qty = sel.qty;
-          const priceStr = String(item['標準售價(NTD)'] || '0').replace(/,/g, '');
-          const costStr = String(item['預估成本(NTD)'] || '0').replace(/,/g, '');
-          
-          const price = Number(priceStr) || 0;
-          const cost = Number(costStr) || 0;
+          const price = Number(String(item['標準售價(NTD)'] || '0').replace(/,/g, '')) || 0;
+          const cost = Number(String(item['預估成本(NTD)'] || '0').replace(/,/g, '')) || 0;
           const name = item['項目名稱'] || '';
           const spec = item['規格與功能說明'] || '';
           const unit = item['預設單位'] || '';
@@ -549,7 +562,7 @@
           const itemSubtotal = price * qty;
           const itemCostTotal = cost * qty;
 
-          totalRevenue += itemSubtotal;
+          rawRevenue += itemSubtotal;
           totalCost += itemCostTotal;
 
           selectedListUI.innerHTML += `<li class="flex justify-between"><span>${name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
@@ -576,7 +589,7 @@
         const itemSubtotal = price * qty;
         const itemCostTotal = cost * qty;
 
-        totalRevenue += itemSubtotal;
+        rawRevenue += itemSubtotal;
         totalCost += itemCostTotal;
 
         selectedListUI.innerHTML += `<li class="flex justify-between text-amber-700"><span>[客製] ${cItem.name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
@@ -592,6 +605,45 @@
           </tr>
         `;
       });
+
+      // 💡 計算優惠折扣與總額覆寫
+      const discountType = document.getElementById('discountType').value;
+      const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
+      const manualTotalInput = parseFloat(document.getElementById('manualTotal').value);
+
+      let discountAmount = 0;
+      let finalRevenue = rawRevenue;
+
+      if (discountType === 'amount') {
+        discountAmount = discountValue;
+        finalRevenue = Math.max(0, rawRevenue - discountAmount);
+      } else if (discountType === 'percent') {
+        // 百分比折扣 (例如輸入 9 代表 9 折，即 0.9；輸入 0.85 代表 85 折)
+        const rate = discountValue > 1 ? discountValue / 10 : discountValue;
+        discountAmount = rawRevenue * (1 - rate);
+        finalRevenue = rawRevenue * rate;
+      }
+
+      // 若手動指定了整數總額，優先採用手動覆寫
+      if (!isNaN(manualTotalInput) && manualTotalInput >= 0) {
+        finalRevenue = manualTotalInput;
+        discountAmount = Math.max(0, rawRevenue - finalRevenue);
+      }
+
+      // 更新右側面板統計數字
+      document.getElementById('statOriginalRevenue').innerText = `NT$ ${rawRevenue.toLocaleString()}`;
+      document.getElementById('statDiscountAmountLL') = ''; // placeholder
+      document.getElementById('statDiscountAmount').innerText = `- NT$ ${Math.round(discountAmount).toLocaleString()}`;
+      document.getElementById('statRevenue').innerText = `NT$ ${Math.round(finalRevenue).toLocaleString()}`;
+
+      // PDF 上的折扣資訊顯示控制
+      const pdfDiscountRow = document.getElementById('pdfDiscountRow');
+      if (discountAmount > 0) {
+        pdfDiscountRow.classList.remove('hidden');
+        document.getElementById('pdfDiscountAmountText').innerText = `- NT$ ${Math.round(discountAmount).toLocaleString()}`;
+      } else {
+        pdfDiscountRow.classList.add('hidden');
+      }
 
       // 計算頁碼置中
       const totalPages = 1 + attachmentFiles.length;
@@ -626,27 +678,29 @@
         pdfAttContainer.classList.add('hidden');
       }
 
-      const totalMargin = totalRevenue - totalCost;
-      const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
+      const totalMargin = finalRevenue - totalCost;
+      const marginRate = finalRevenue > 0 ? ((totalMargin / finalRevenue) * 100).toFixed(1) : 0;
 
-      document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
       document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
-      document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
+      document.getElementById('statMargin').innerText = `NT$ ${Math.round(totalMargin).toLocaleString()}`;
       document.getElementById('statMarginRate').innerText = `${marginRate}%`;
       document.getElementById('selectedCount').innerText = count;
 
+      // 填入 PDF 欄位
       document.getElementById('pdfCustName').innerText = document.getElementById('custName').value;
       document.getElementById('pdfCustContact').innerText = document.getElementById('custContact').value;
+      document.getElementById('pdfCustPhone').innerText = document.getElementById('custPhone').value;
+      document.getElementById('pdfCustEmail').innerText = document.getElementById('custEmail').value;
       document.getElementById('pdfQuoteNo').innerText = document.getElementById('quoteNo').value;
       document.getElementById('pdfQuoteDate').innerText = document.getElementById('quoteDate').value;
       document.getElementById('pdfGlueSpec').innerText = document.getElementById('glueSpec').value;
       document.getElementById('pdfPaymentTerm').innerText = document.getElementById('paymentTerm').value;
       document.getElementById('pdfSalesName').innerText = document.getElementById('salesName').value;
 
-      const tax = Math.round(totalRevenue * 0.05);
-      document.getElementById('pdfSubtotal').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      const tax = Math.round(finalRevenue * 0.05);
+      document.getElementById('pdfSubtotal').innerText = `NT$ ${Math.round(finalRevenue).toLocaleString()}`;
       document.getElementById('pdfTax').innerText = `NT$ ${tax.toLocaleString()}`;
-      document.getElementById('pdfTotal').innerText = `NT$ ${(totalRevenue + tax).toLocaleString()}`;
+      document.getElementById('pdfTotal').innerText = `NT$ ${(Math.round(finalRevenue) + tax).toLocaleString()}`;
     }
 
     function renderUI() {

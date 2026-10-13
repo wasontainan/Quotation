@@ -124,7 +124,7 @@
 
     </div>
 
-    <!-- 右側：即時成本/毛利與摘要試算 (含詳細備註) -->
+    <!-- 右側：即時成本/毛利與摘要試算 -->
     <div class="lg:col-span-5 space-y-6">
       <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20 space-y-4">
         <h2 class="font-bold text-lg text-slate-700 border-b pb-2">📊 報價金額與利潤試算</h2>
@@ -147,7 +147,6 @@
               <input type="number" id="discountValue" value="0" min="0" oninput="updatePreview()" class="w-full border rounded p-1.5 text-right font-medium">
             </div>
           </div>
-          <!-- 💡 新增的備註說明 -->
           <p class="text-[10px] text-indigo-700 bg-indigo-50 p-1.5 rounded border border-indigo-100">
             💡 <b>百分比備註：</b>可輸入 <b>9</b> 或 <b>0.9</b> 代表 9 折（若大於 1 系統會自動除以 10 計算）。
           </p>
@@ -733,14 +732,17 @@
 
     function exportPDF() {
       const element = document.getElementById('pdfContent');
-      const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
-      const custName = document.getElementById('custName').value || 'Customer';
+      
+      // 💡 自動抓取「客戶名稱_報價單_單號」作為 PDF 預設檔名
+      const custName = (document.getElementById('custName').value || '客戶').trim();
+      const quoteNo = (document.getElementById('quoteNo').value || 'Quotation').trim();
+      const pdfFilename = `${custName}_報價單_${quoteNo}.pdf`;
 
       window.scrollTo(0, 0);
 
       const opt = {
         margin:       0,
-        filename:     `${custName}_報價單_${quoteNo}.pdf`,
+        filename:     pdfFilename,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { 
           scale: 2, 

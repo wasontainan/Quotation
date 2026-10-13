@@ -54,14 +54,29 @@
           <div><label class="block text-slate-500 mb-1">報價日期</label><input type="date" id="quoteDate" value="2025-01-09" onchange="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">膠種 / 比例</label><input type="text" id="glueSpec" value="AB膠 (100:20 / 15cc/秒)" oninput="updatePreview()" class="w-full border rounded p-2"></div>
           <div><label class="block text-slate-500 mb-1">付款條件</label><input type="text" id="paymentTerm" value="訂金40%，驗收後60天票期60%" oninput="updatePreview()" class="w-full border rounded p-2"></div>
-          
-          <!-- 報價人員與簽名檔上傳區 -->
-          <div><label class="block text-slate-500 mb-1">報價人員姓名</label><input type="text" id="salesName" value="黃信傑" oninput="updatePreview()" class="w-full border rounded p-2"></div>
+        </div>
+      </div>
+
+      <!-- 💡 獨立區塊：報價人員與電子簽名檔上傳 -->
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 bg-blue-50/20">
+        <h2 class="font-bold text-lg text-blue-900 border-b border-blue-200 pb-2 mb-4 flex items-center gap-2">
+          <span>✍️ 報價人員與電子簽名檔</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm items-start">
           <div>
-            <label class="block text-slate-500 mb-1">上傳電子簽名檔 (圖片)</label>
-            <div class="flex items-center gap-2">
-              <input type="file" id="signatureInput" accept="image/*" onchange="handleSignatureUpload(event)" class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
-              <button onclick="clearSignature()" class="text-xs text-red-500 hover:underline">清除</button>
+            <label class="block text-slate-600 font-medium mb-1">報價人員姓名</label>
+            <input type="text" id="salesName" value="黃信傑" oninput="updatePreview()" class="w-full border rounded p-2 font-semibold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-slate-600 font-medium mb-1">上傳簽名檔圖片 (PNG/JPG)</label>
+            <input type="file" id="signatureInput" accept="image/*" onchange="handleSignatureUpload(event)" class="w-full text-xs text-slate-500 border rounded p-1.5 bg-white cursor-pointer">
+            <div class="flex items-center justify-between mt-2">
+              <span id="sigUploadStatus" class="text-xs text-slate-400">尚未上傳圖片</span>
+              <button onclick="clearSignature()" class="text-xs text-red-600 font-semibold hover:underline bg-red-50 px-2 py-1 rounded">✕ 清除簽名</button>
+            </div>
+            <!-- 表單側預覽 -->
+            <div id="formSigPreviewBox" class="mt-2 hidden border border-dashed border-slate-300 p-2 text-center bg-white rounded">
+              <img id="formSigPreviewImg" class="h-10 mx-auto object-contain" alt="簽名預覽">
             </div>
           </div>
         </div>
@@ -209,7 +224,7 @@
         <p>4. 備品:隨機附贈混合管20支、膠閥油封1套</p>
       </div>
 
-      <!-- 💡 修正後的簽核區結構 -->
+      <!-- 💡 簽核區結構（包含圖片獨立渲染） -->
       <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
         <div>
           <p class="mb-14">客戶確認簽章：</p>
@@ -218,7 +233,7 @@
         <div>
           <p class="mb-2">報價單位：華勝科技股份有限公司</p>
           <div class="w-56 border-b border-slate-400 pb-1">
-            <!-- 簽名檔圖片預覽盒（預設高度 48px，上傳後顯示） -->
+            <!-- 簽名檔圖片專屬位置 -->
             <div class="h-12 flex items-center justify-start mb-1 overflow-hidden">
               <img id="pdfSignatureImg" class="max-h-12 max-w-full object-contain hidden" alt="電子簽名">
             </div>
@@ -297,27 +312,42 @@
       });
     }
 
-    // 💡 處理簽名檔圖片讀取
+    // 💡 處理電子簽名檔圖片上傳與預覽
     function handleSignatureUpload(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           signatureDataUrl = e.target.result;
-          const img = document.getElementById('pdfSignatureImg');
-          img.src = signatureDataUrl;
-          img.classList.remove('hidden');
+          
+          // 1. 設定 PDF 報價單內的圖片
+          const pdfImg = document.getElementById('pdfSignatureImg');
+          pdfImg.src = signatureDataUrl;
+          pdfImg.classList.remove('hidden');
+
+          // 2. 設定表單區的預覽小圖
+          const formImg = document.getElementById('formSigPreviewImg');
+          formImg.src = signatureDataUrl;
+          document.getElementById('formSigPreviewBox').classList.remove('hidden');
+          document.getElementById('sigUploadStatus').innerText = '✅ 圖片已載入';
+          document.getElementById('sigUploadStatus').className = 'text-xs text-emerald-600 font-semibold';
         };
         reader.readAsDataURL(file);
       }
     }
 
+    // 💡 清除簽名檔圖片
     function clearSignature() {
       signatureDataUrl = '';
       document.getElementById('signatureInput').value = '';
-      const img = document.getElementById('pdfSignatureImg');
-      img.src = '';
-      img.classList.add('hidden');
+      
+      const pdfImg = document.getElementById('pdfSignatureImg');
+      pdfImg.src = '';
+      pdfImg.classList.add('hidden');
+
+      document.getElementById('formSigPreviewBox').classList.add('hidden');
+      document.getElementById('sigUploadStatus').innerText = '尚未上傳圖片';
+      document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
     }
 
     function addCustomItem() {

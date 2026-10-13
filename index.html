@@ -16,7 +16,7 @@
       body { background: white !important; }
       .pdf-page { shadow: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; }
     }
-    .pdf-page { width: 210mm; min-height: 297mm; padding: 12mm; background: white; margin: auto; box-sizing: border-box; }
+    .pdf-page { width: 210mm; min-height: 297mm; padding: 12mm; background: white; margin: auto; box-sizing: border-box; position: relative; }
     /* 強制 PDF 分頁 */
     .page-break { page-break-before: always; break-before: page; }
   </style>
@@ -171,99 +171,106 @@
   
   <div class="p-4 bg-slate-200 overflow-x-auto space-y-6">
     <!-- 第一頁：主報價單 -->
-    <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm">
+    <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm flex flex-col justify-between">
       
-      <!-- 💡 公司原本抬頭圖檔（直接嵌入） -->
-      <div class="border-b-2 border-slate-800 pb-2 mb-3">
-        <img src="https://i.imgur.com/vH9x4Nl.png" id="companyHeaderImg" alt="華勝科技股份有限公司" class="w-full h-auto object-contain" crossorigin="anonymous">
-      </div>
-
-      <!-- 報價單標題與單號資訊 -->
-      <div class="flex justify-between items-end mb-3">
-        <div>
-          <h2 class="text-xl font-bold tracking-wider text-slate-900">報價單 (Quotation)</h2>
-          <p class="text-xs text-slate-600 mt-1 italic font-medium">很榮幸能夠有這個機會提供我方的報價給您，請參照：</p>
+      <div>
+        <!-- 公司抬頭圖檔 -->
+        <div class="border-b-2 border-slate-800 pb-2 mb-3">
+          <img id="companyHeaderImg" alt="華勝科技股份有限公司" class="w-full h-auto object-contain">
         </div>
-        <div class="text-right text-xs text-slate-600">
-          <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
-          <p>報價日期：<span id="pdfQuoteDate"></span></p>
-          <p>有效期限：15天</p>
-        </div>
-      </div>
 
-      <!-- 客戶與交易條件 -->
-      <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded mb-4 border border-slate-200">
-        <div>
-          <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
-          <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
-          <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
-        </div>
-        <div>
-          <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
-          <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
-          <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
-        </div>
-      </div>
-
-      <!-- 報價明細表格 -->
-      <table class="w-full text-xs border-collapse mb-4">
-        <thead>
-          <tr class="bg-slate-800 text-white">
-            <th class="p-2 text-left w-12">項次</th>
-            <th class="p-2 text-left">項目名稱與規格說明</th>
-            <th class="p-2 text-center w-16">數量</th>
-            <th class="p-2 text-center w-12">單位</th>
-            <th class="p-2 text-right w-24">單價 (NTD)</th>
-            <th class="p-2 text-right w-24">小計 (NTD)</th>
-          </tr>
-        </thead>
-        <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
-          <!-- 動態帶入 -->
-        </tbody>
-      </table>
-
-      <!-- 金額總計 -->
-      <div class="flex justify-end mb-6">
-        <div class="w-64 space-y-1 text-xs text-right">
-          <div class="flex justify-between py-1 border-b">
-            <span class="text-slate-500">未稅總額 (Subtotal)：</span>
-            <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+        <!-- 報價單標題與單號資訊 -->
+        <div class="flex justify-between items-end mb-3">
+          <div>
+            <h2 class="text-xl font-bold tracking-wider text-slate-900">報價單 (Quotation)</h2>
+            <p class="text-xs text-slate-600 mt-1 italic font-medium">很榮幸能夠有這個機會提供我方的報價給您，請參照：</p>
           </div>
-          <div class="flex justify-between py-1 border-b">
-            <span class="text-slate-500">營業稅 (5% Tax)：</span>
-            <span id="pdfTax">NT$ 0</span>
-          </div>
-          <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
-            <span>報價總額 (Total)：</span>
-            <span id="pdfTotal">NT$ 0</span>
+          <div class="text-right text-xs text-slate-600">
+            <p>報價單號：<span id="pdfQuoteNo" class="font-semibold"></span></p>
+            <p>報價日期：<span id="pdfQuoteDate"></span></p>
+            <p>有效期限：15天</p>
           </div>
         </div>
-      </div>
 
-      <!-- 備註與條款 -->
-      <div class="border-t pt-3 text-[10px] text-slate-600 space-y-1">
-        <p class="font-bold text-slate-800 mb-1">其他資訊：</p>
-        <p>1. 稅金:以上報價為工廠出貨價，不包含營業稅。</p>
-        <p>2. 驗收:標準機型交機後一個月驗收完畢；客製機型交機後兩個月驗收完畢。</p>
-        <p>3. 保固:機台自交機日起保固一年，天災及人為錯誤除外。</p>
-        <p>4. 備品:隨機附贈混合管20支、膠閥油封1套</p>
-      </div>
-
-      <!-- 簽核區 -->
-      <div class="grid grid-cols-2 gap-8 mt-8 text-xs pt-4 border-t border-slate-300">
-        <div>
-          <p class="mb-14">客戶確認簽章：</p>
-          <p class="border-b border-slate-400 w-56"></p>
+        <!-- 客戶與交易條件 -->
+        <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded mb-4 border border-slate-200">
+          <div>
+            <p><span class="text-slate-500">客戶名稱：</span><span id="pdfCustName" class="font-semibold"></span></p>
+            <p><span class="text-slate-500">聯絡人員：</span><span id="pdfCustContact"></span></p>
+            <p><span class="text-slate-500">膠種比例：</span><span id="pdfGlueSpec"></span></p>
+          </div>
+          <div>
+            <p><span class="text-slate-500">貿易條件：</span>台灣交貨 (FOB)</p>
+            <p><span class="text-slate-500">付款方式：</span><span id="pdfPaymentTerm"></span></p>
+            <p><span class="text-slate-500">預估交期：</span>收到訂金後 60 天</p>
+          </div>
         </div>
-        <div>
-          <p class="mb-2">報價單位：華勝科技股份有限公司</p>
-          <div class="w-56">
-            <p class="mb-1">報價人員：<span id="pdfSalesName"></span></p>
-            <div class="relative h-14 border-b border-slate-400 flex items-center justify-center">
-              <img id="pdfSignatureImg" class="max-h-12 max-w-full object-contain hidden" alt="電子簽名">
+
+        <!-- 報價明細表格 -->
+        <table class="w-full text-xs border-collapse mb-4">
+          <thead>
+            <tr class="bg-slate-800 text-white">
+              <th class="p-2 text-left w-12">項次</th>
+              <th class="p-2 text-left">項目名稱與規格說明</th>
+              <th class="p-2 text-center w-16">數量</th>
+              <th class="p-2 text-center w-12">單位</th>
+              <th class="p-2 text-right w-24">單價 (NTD)</th>
+              <th class="p-2 text-right w-24">小計 (NTD)</th>
+            </tr>
+          </thead>
+          <tbody id="pdfTableBody" class="divide-y divide-slate-200 border-b border-slate-200">
+            <!-- 動態帶入 -->
+          </tbody>
+        </table>
+
+        <!-- 金額總計 -->
+        <div class="flex justify-end mb-6">
+          <div class="w-64 space-y-1 text-xs text-right">
+            <div class="flex justify-between py-1 border-b">
+              <span class="text-slate-500">未稅總額 (Subtotal)：</span>
+              <span id="pdfSubtotal" class="font-bold text-sm">NT$ 0</span>
+            </div>
+            <div class="flex justify-between py-1 border-b">
+              <span class="text-slate-500">營業稅 (5% Tax)：</span>
+              <span id="pdfTax">NT$ 0</span>
+            </div>
+            <div class="flex justify-between py-1 font-bold text-sm text-blue-900">
+              <span>報價總額 (Total)：</span>
+              <span id="pdfTotal">NT$ 0</span>
             </div>
           </div>
         </div>
+
+        <!-- 備註與條款 -->
+        <div class="border-t pt-3 text-[10px] text-slate-600 space-y-1">
+          <p class="font-bold text-slate-800 mb-1">其他資訊：</p>
+          <p>1. 稅金:以上報價為工廠出貨價，不包含營業稅。</p>
+          <p>2. 驗收:標準機型交機後一個月驗收完畢；客製機型交機後兩個月驗收完畢。</p>
+          <p>3. 保固:機台自交機日起保固一年，天災及人為錯誤除外。</p>
+          <p>4. 備品:隨機附贈混合管20支、膠閥油封1套</p>
+        </div>
+
+        <!-- 簽核區 -->
+        <div class="grid grid-cols-2 gap-8 mt-6 text-xs pt-4 border-t border-slate-300">
+          <div>
+            <p class="mb-14">客戶確認簽章：</p>
+            <p class="border-b border-slate-400 w-56"></p>
+          </div>
+          <div>
+            <p class="mb-2">報價單位：華勝科技股份有限公司</p>
+            <div class="w-56">
+              <p class="mb-1">報價人員：<span id="pdfSalesName"></span></p>
+              <div class="relative h-14 border-b border-slate-400 flex items-center justify-center">
+                <img id="pdfSignatureImg" class="max-h-12 max-w-full object-contain hidden" alt="電子簽名">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💡 頁尾頁碼 (第一頁) -->
+      <div class="mt-8 pt-2 border-t border-slate-200 text-right text-[10px] text-slate-400">
+        <span id="pdfPageNum1">第 1 頁 / 共 1 頁</span>
       </div>
 
       <!-- 第二頁（或延伸頁）：獨立附件圖片渲染區 -->
@@ -275,9 +282,6 @@
   </div>
 
   <script>
-    // 您上傳的標頭圖檔 Data URI (自動替換)
-    const HEADER_IMAGE_DATA_URI = "https://i.imgur.com/vH9x4Nl.png";
-
     // 您的 Google Sheets 發布 CSV 網址
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5qPZidqe2n-fslBjxj3Cs-LBwur1xRjngS6c93mzzjQkkAYXZBsCTP26GDd2Z0y8YBNLv-L3sBJmq/pub?gid=1765616625&single=true&output=csv';
 
@@ -288,11 +292,8 @@
     let attachmentFiles = [];
 
     window.onload = function() {
-      // 載入公司抬頭圖
       const headerImg = document.getElementById('companyHeaderImg');
-      if (HEADER_IMAGE_DATA_URI) {
-        headerImg.src = HEADER_IMAGE_DATA_URI;
-      }
+      headerImg.src = "https://i.imgur.com/vH9x4Nl.png"; 
 
       Papa.parse(CSV_URL, {
         download: true,
@@ -352,7 +353,6 @@
       });
     }
 
-    // 處理電子簽名檔圖片上傳與預覽
     function handleSignatureUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -387,7 +387,6 @@
       document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
     }
 
-    // 處理報價單附件圖片上傳
     function handleAttachmentsUpload(event) {
       const files = Array.from(event.target.files);
       files.forEach(file => {
@@ -552,6 +551,10 @@
         `;
       });
 
+      // 💡 計算總頁數與動態帶入頁碼
+      const totalPages = 1 + attachmentFiles.length;
+      document.getElementById('pdfPageNum1').innerText = `第 1 頁 / 共 ${totalPages} 頁`;
+
       // 渲染 PDF 附件頁面
       const pdfAttContainer = document.getElementById('pdfAttachmentsContainer');
       pdfAttContainer.innerHTML = '';
@@ -559,14 +562,20 @@
       if (attachmentFiles.length > 0) {
         pdfAttContainer.classList.remove('hidden');
         attachmentFiles.forEach((att, index) => {
+          const pageIndex = index + 2;
           pdfAttContainer.innerHTML += `
-            <div class="page-break pt-6">
-              <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-center">
-                <h3 class="font-bold text-base text-slate-800">📷 報價單附件 (${index + 1}/${attachmentFiles.length}) - ${att.name}</h3>
-                <span class="text-xs text-slate-500">華勝科技股份有限公司</span>
+            <div class="page-break pt-6 flex flex-col justify-between min-h-[270mm]">
+              <div>
+                <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-center">
+                  <h3 class="font-bold text-base text-slate-800">📷 報價單附件 (${index + 1}/${attachmentFiles.length}) - ${att.name}</h3>
+                  <span class="text-xs text-slate-500">華勝科技股份有限公司</span>
+                </div>
+                <div class="flex justify-center items-center p-2 bg-slate-50 border rounded min-h-[600px]">
+                  <img src="${att.src}" class="max-w-full max-h-[220mm] object-contain rounded shadow-sm">
+                </div>
               </div>
-              <div class="flex justify-center items-center p-2 bg-slate-50 border rounded min-h-[600px]">
-                <img src="${att.src}" class="max-w-full max-h-[230mm] object-contain rounded shadow-sm">
+              <div class="pt-2 border-t border-slate-200 text-right text-[10px] text-slate-400">
+                第 ${pageIndex} 頁 / 共 ${totalPages} 頁
               </div>
             </div>
           `;

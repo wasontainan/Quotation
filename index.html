@@ -21,7 +21,7 @@
     .page-break { page-break-before: always; break-before: page; }
   </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800">
+<body class="bg-slate-100 text-slate-800" style="font-family: Calibri, 'Microsoft JhengHei', sans-serif;">
 
   <!-- 頂部操作列 (不列印) -->
   <header class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md no-print">
@@ -174,7 +174,7 @@
     <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm flex flex-col justify-between">
       
       <div>
-        <!-- 公司抬頭圖檔 (完全採用您提供的原圖) -->
+        <!-- 公司抬頭圖片 -->
         <div class="border-b-2 border-slate-800 pb-2 mb-3">
           <img id="companyHeaderImg" alt="華勝科技股份有限公司" class="w-full h-auto object-contain">
         </div>
@@ -268,8 +268,8 @@
         </div>
       </div>
 
-      <!-- 頁尾頁碼 (第一頁) -->
-      <div class="mt-8 pt-2 border-t border-slate-200 text-right text-[10px] text-slate-400">
+      <!-- 置中頁碼 (第一頁) -->
+      <div class="mt-8 pt-2 border-t border-slate-200 text-center text-[10px] text-slate-400 tracking-wider">
         <span id="pdfPageNum1">第 1 頁 / 共 1 頁</span>
       </div>
 
@@ -285,6 +285,9 @@
     // 您的 Google Sheets 發布 CSV 網址
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT5qPZidqe2n-fslBjxj3Cs-LBwur1xRjngS6c93mzzjQkkAYXZBsCTP26GDd2Z0y8YBNLv-L3sBJmq/pub?gid=1765616625&single=true&output=csv';
 
+    // 華勝科技預設 Logo (內建 Base64 SVG 確保不破圖)
+    const DEFAULT_LOGO_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='140' viewBox='0 0 1200 140'><rect width='100%' height='100%' fill='%23ffffff'/><g transform='translate(10,15)'><rect x='0' y='0' width='230' height='80' rx='10' fill='none' stroke='%231d4ed8' stroke-width='6'/><text x='115' y='53' font-family='sans-serif' font-weight='bold' font-size='42' fill='%231d4ed8' text-anchor='middle'>WASON</text></g><text x='260' y='65' font-family='sans-serif' font-weight='bold' font-size='38' fill='%230f172a'>華勝科技股份有限公司</text><text x='260' y='98' font-family='sans-serif' font-weight='bold' font-size='22' fill='%230f172a'>WASON TECHNOLOGY CO., LTD.</text><text x='780' y='45' font-family='sans-serif' font-size='20' fill='%23334155'>335桃園市大溪區介壽路328號</text><text x='780' y='72' font-family='sans-serif' font-size='17' fill='%23334155'>No. 328, Jieshou Rd., Daxi Dist., Taoyuan City 335, Taiwan</text><line x1='0' y1='115' x2='1200' y2='115' stroke='%230f172a' stroke-width='2'/><text x='10' y='133' font-family='sans-serif' font-size='16' fill='%23334155'>T: +886-3-390-6300 &nbsp;&nbsp; F: +886-3-389-4321 &nbsp;&nbsp; E: sales@wason.com.tw &nbsp;&nbsp; <tspan fill='%231d4ed8' font-weight='bold'>www.wason.com.tw</tspan></text></svg>";
+
     let modulesData = [];
     let selectedItems = {};
     let customItems = [];
@@ -292,6 +295,351 @@
     let attachmentFiles = [];
 
     window.onload = function() {
-      // 直接把您上傳的「報價單LOGO.jpg」完整編碼設為圖片源
-      const logoImg = document.getElementById('companyHeaderImg');
-      logoImg.src = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA3ADcAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1EAF1bX15fP25zb28dRG5ZX1v/2wBDARERER4RHGQaGj5bR39He3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3v/wAARCACHAK8DASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi46Gp4eJzo6Wl5iZ
+      // 載入預設抬頭 Logo
+      const headerImg = document.getElementById('companyHeaderImg');
+      headerImg.src = DEFAULT_LOGO_SVG;
+
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          const codeRegex = /^[A-Z]-\d+/i;
+          modulesData = results.data.filter(r => r['模組編號'] && codeRegex.test(r['模組編號'].trim()));
+
+          document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
+          document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
+
+          renderModules();
+          updatePreview();
+        },
+        error: function(err) {
+          document.getElementById('loadingStatus').innerText = '❌ 價格庫載入失敗';
+          document.getElementById('loadingStatus').classList.add('text-red-500');
+        }
+      });
+    };
+
+    function renderModules() {
+      const container = document.getElementById('moduleCategories');
+      container.innerHTML = '';
+
+      const categories = [...new Set(modulesData.map(m => m['模組類別']))];
+
+      categories.forEach(cat => {
+        const catItems = modulesData.filter(m => m['模組類別'] === cat);
+        let html = `<div class="border rounded-md p-3 bg-slate-50"><h3 class="font-bold text-sm text-slate-700 mb-2">${cat}</h3><div class="space-y-2">`;
+
+        catItems.forEach(item => {
+          const id = item['模組編號'];
+          const isSelected = selectedItems[id]?.selected || false;
+          const qty = selectedItems[id]?.qty || 1;
+          const price = Number((item['標準售價(NTD)'] || '0').replace(/,/g, '')) || 0;
+
+          html += `
+            <div class="flex items-center justify-between bg-white p-2.5 rounded border text-sm">
+              <div class="flex items-start gap-2 flex-1 pr-2">
+                <input type="checkbox" id="chk_${id}" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${id}')" class="mt-1 rounded text-blue-600 cursor-pointer">
+                <div>
+                  <label for="chk_${id}" class="font-semibold text-slate-800 cursor-pointer">${item['項目名稱']} <span class="text-xs text-slate-400">(${id})</span></label>
+                  <p class="text-xs text-slate-500">${item['規格與功能說明']}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold text-slate-600">NT$ ${price.toLocaleString()}</span>
+                <input type="number" min="1" value="${qty}" onchange="updateQty('${id}', this.value)" ${!isSelected ? 'disabled' : ''} class="w-14 border rounded p-1 text-center text-xs">
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    function handleSignatureUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          signatureDataUrl = e.target.result;
+          
+          const pdfImg = document.getElementById('pdfSignatureImg');
+          pdfImg.src = signatureDataUrl;
+          pdfImg.classList.remove('hidden');
+
+          const formImg = document.getElementById('formSigPreviewImg');
+          formImg.src = signatureDataUrl;
+          document.getElementById('formSigPreviewBox').classList.remove('hidden');
+          document.getElementById('sigUploadStatus').innerText = '✅ 簽名檔已載入';
+          document.getElementById('sigUploadStatus').className = 'text-xs text-emerald-600 font-semibold';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function clearSignature() {
+      signatureDataUrl = '';
+      document.getElementById('signatureInput').value = '';
+      
+      const pdfImg = document.getElementById('pdfSignatureImg');
+      pdfImg.src = '';
+      pdfImg.classList.add('hidden');
+
+      document.getElementById('formSigPreviewBox').classList.add('hidden');
+      document.getElementById('sigUploadStatus').innerText = '尚未上傳簽名圖片';
+      document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
+    }
+
+    function handleAttachmentsUpload(event) {
+      const files = Array.from(event.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          attachmentFiles.push({
+            id: 'ATT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: file.name,
+            src: e.target.result
+          });
+          renderAttachmentsList();
+          updatePreview();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeAttachment(id) {
+      attachmentFiles = attachmentFiles.filter(att => att.id !== id);
+      renderAttachmentsList();
+      updatePreview();
+    }
+
+    function renderAttachmentsList() {
+      const container = document.getElementById('attachmentsPreviewList');
+      container.innerHTML = '';
+
+      attachmentFiles.forEach((att) => {
+        container.innerHTML += `
+          <div class="flex items-center justify-between bg-white p-2 rounded border text-xs">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <img src="${att.src}" class="w-8 h-8 object-cover rounded border">
+              <span class="truncate font-medium text-slate-700">${att.name}</span>
+            </div>
+            <button onclick="removeAttachment('${att.id}')" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">✕ 刪除</button>
+          </div>
+        `;
+      });
+    }
+
+    function addCustomItem() {
+      customItems.push({
+        id: 'CUST_' + Date.now(),
+        name: '客製化項目',
+        spec: '依客戶規格客製',
+        unit: '項',
+        qty: 1,
+        cost: 0,
+        price: 0
+      });
+      renderCustomItems();
+      updatePreview();
+    }
+
+    function removeCustomItem(index) {
+      customItems.splice(index, 1);
+      renderCustomItems();
+      updatePreview();
+    }
+
+    function renderCustomItems() {
+      const container = document.getElementById('customItemsList');
+      container.innerHTML = '';
+
+      customItems.forEach((item, index) => {
+        container.innerHTML += `
+          <div class="bg-white p-3 rounded border border-amber-200 text-xs space-y-2">
+            <div class="flex justify-between items-center gap-2">
+              <input type="text" value="${item.name}" placeholder="項目名稱" oninput="customItems[${index}].name = this.value; updatePreview();" class="font-bold border rounded p-1 flex-1">
+              <button onclick="removeCustomItem(${index})" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">✕ 刪除</button>
+            </div>
+            <input type="text" value="${item.spec}" placeholder="規格說明" oninput="customItems[${index}].spec = this.value; updatePreview();" class="w-full border rounded p-1 text-slate-500">
+            <div class="grid grid-cols-4 gap-2 pt-1">
+              <div><label class="text-[10px] text-slate-400 block">數量</label><input type="number" min="1" value="${item.qty}" oninput="customItems[${index}].qty = Math.max(1, parseInt(this.value)||1); updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">單位</label><input type="text" value="${item.unit}" oninput="customItems[${index}].unit = this.value; updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">成本(NTD)</label><input type="number" value="${item.cost}" oninput="customItems[${index}].cost = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right"></div>
+              <div><label class="text-[10px] text-slate-400 block">售價(NTD)</label><input type="number" value="${item.price}" oninput="customItems[${index}].price = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right font-bold text-amber-900"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function toggleSelect(id) {
+      if (!selectedItems[id]) selectedItems[id] = { selected: false, qty: 1 };
+      selectedItems[id].selected = !selectedItems[id].selected;
+      renderModules();
+      updatePreview();
+    }
+
+    function updateQty(id, qty) {
+      if (selectedItems[id]) {
+        selectedItems[id].qty = Math.max(1, parseInt(qty) || 1);
+        updatePreview();
+      }
+    }
+
+    function updatePreview() {
+      let totalRevenue = 0;
+      let totalCost = 0;
+      let count = 0;
+
+      const pdfBody = document.getElementById('pdfTableBody');
+      const selectedListUI = document.getElementById('selectedList');
+      pdfBody.innerHTML = '';
+      selectedListUI.innerHTML = '';
+
+      modulesData.forEach(item => {
+        const id = item['模組編號'];
+        const sel = selectedItems[id];
+
+        if (sel && sel.selected) {
+          count++;
+          const qty = sel.qty;
+          const price = Number((item['標準售價(NTD)'] || '0').replace(/,/g, '')) || 0;
+          const cost = Number((item['預估成本(NTD)'] || '0').replace(/,/g, '')) || 0;
+          
+          const itemSubtotal = price * qty;
+          const itemCostTotal = cost * qty;
+
+          totalRevenue += itemSubtotal;
+          totalCost += itemCostTotal;
+
+          selectedListUI.innerHTML += `<li class="flex justify-between"><span>${item['項目名稱']} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+          pdfBody.innerHTML += `
+            <tr>
+              <td class="p-2 text-center">${count}</td>
+              <td class="p-2"><div class="font-semibold">${item['項目名稱']}</div><div class="text-[10px] text-slate-500">${item['規格與功能說明']}</div></td>
+              <td class="p-2 text-center">${qty}</td>
+              <td class="p-2 text-center">${item['預設單位']}</td>
+              <td class="p-2 text-right">${price.toLocaleString()}</td>
+              <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+            </tr>
+          `;
+        }
+      });
+
+      customItems.forEach(cItem => {
+        count++;
+        const qty = cItem.qty || 1;
+        const price = cItem.price || 0;
+        const cost = cItem.cost || 0;
+
+        const itemSubtotal = price * qty;
+        const itemCostTotal = cost * qty;
+
+        totalRevenue += itemSubtotal;
+        totalCost += itemCostTotal;
+
+        selectedListUI.innerHTML += `<li class="flex justify-between text-amber-700"><span>[客製] ${cItem.name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+        pdfBody.innerHTML += `
+          <tr>
+            <td class="p-2 text-center">${count}</td>
+            <td class="p-2"><div class="font-semibold text-amber-900">${cItem.name}</div><div class="text-[10px] text-slate-500">${cItem.spec}</div></td>
+            <td class="p-2 text-center">${qty}</td>
+            <td class="p-2 text-center">${cItem.unit}</td>
+            <td class="p-2 text-right">${price.toLocaleString()}</td>
+            <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      // 計算頁數並置中顯示
+      const totalPages = 1 + attachmentFiles.length;
+      document.getElementById('pdfPageNum1').innerText = `第 1 頁 / 共 ${totalPages} 頁`;
+
+      // 渲染 PDF 附件頁面
+      const pdfAttContainer = document.getElementById('pdfAttachmentsContainer');
+      pdfAttContainer.innerHTML = '';
+
+      if (attachmentFiles.length > 0) {
+        pdfAttContainer.classList.remove('hidden');
+        attachmentFiles.forEach((att, index) => {
+          const pageIndex = index + 2;
+          pdfAttContainer.innerHTML += `
+            <div class="page-break pt-6 flex flex-col justify-between min-h-[270mm]">
+              <div>
+                <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-center">
+                  <h3 class="font-bold text-base text-slate-800">📷 報價單附件 (${index + 1}/${attachmentFiles.length}) - ${att.name}</h3>
+                  <span class="text-xs text-slate-500">華勝科技股份有限公司</span>
+                </div>
+                <div class="flex justify-center items-center p-2 bg-slate-50 border rounded min-h-[600px]">
+                  <img src="${att.src}" class="max-w-full max-h-[220mm] object-contain rounded shadow-sm">
+                </div>
+              </div>
+              <!-- 附件置中頁碼 -->
+              <div class="pt-2 border-t border-slate-200 text-center text-[10px] text-slate-400 tracking-wider">
+                第 ${pageIndex} 頁 / 共 ${totalPages} 頁
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        pdfAttContainer.classList.add('hidden');
+      }
+
+      const totalMargin = totalRevenue - totalCost;
+      const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
+
+      document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
+      document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
+      document.getElementById('statMarginRate').innerText = `${marginRate}%`;
+      document.getElementById('selectedCount').innerText = count;
+
+      document.getElementById('pdfCustName').innerText = document.getElementById('custName').value;
+      document.getElementById('pdfCustContact').innerText = document.getElementById('custContact').value;
+      document.getElementById('pdfQuoteNo').innerText = document.getElementById('quoteNo').value;
+      document.getElementById('pdfQuoteDate').innerText = document.getElementById('quoteDate').value;
+      document.getElementById('pdfGlueSpec').innerText = document.getElementById('glueSpec').value;
+      document.getElementById('pdfPaymentTerm').innerText = document.getElementById('paymentTerm').value;
+      document.getElementById('pdfSalesName').innerText = document.getElementById('salesName').value;
+
+      const tax = Math.round(totalRevenue * 0.05);
+      document.getElementById('pdfSubtotal').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('pdfTax').innerText = `NT$ ${tax.toLocaleString()}`;
+      document.getElementById('pdfTotal').innerText = `NT$ ${(totalRevenue + tax).toLocaleString()}`;
+    }
+
+    function renderUI() {
+      const showInternal = document.getElementById('toggleInternal').checked;
+      document.getElementById('internalCalcBox').style.display = showInternal ? 'block' : 'none';
+    }
+
+    function exportPDF() {
+      const element = document.getElementById('pdfContent');
+      const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
+      const custName = document.getElementById('custName').value || 'Customer';
+
+      window.scrollTo(0, 0);
+
+      const opt = {
+        margin:       0,
+        filename:     `${custName}_報價單_${quoteNo}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          scrollY: 0, 
+          scrollX: 0,
+          logging: false 
+        },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>

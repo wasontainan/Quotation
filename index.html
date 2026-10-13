@@ -11,6 +11,7 @@
   <!-- html2pdf.js 用於生成 PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
+    body { font-family: Calibri, 'Microsoft JhengHei', sans-serif; }
     @media print { 
       .no-print { display: none !important; }
       body { background: white !important; }
@@ -21,7 +22,7 @@
     .page-break { page-break-before: always; break-before: page; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800" style="font-family: Calibri, 'Microsoft JhengHei', sans-serif;">
+<body class="bg-slate-100 text-slate-800">
 
   <!-- 頂部操作列 (不列印) -->
   <header class="bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md no-print">
@@ -60,8 +61,8 @@
       </div>
 
       <!-- 報價人員與電子簽名檔上傳 -->
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 bg-blue-50/20">
-        <h2 class="font-bold text-lg text-blue-900 border-b border-blue-200 pb-2 mb-4 flex items-center gap-2">
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 bg-blue-50/20 space-y-4">
+        <h2 class="font-bold text-lg text-blue-900 border-b border-blue-200 pb-2 flex items-center gap-2">
           <span>✍️ 報價簽核與電子簽名檔</span>
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm items-start">
@@ -76,7 +77,6 @@
               <span id="sigUploadStatus" class="text-xs text-slate-400">尚未上傳簽名圖片</span>
               <button onclick="clearSignature()" class="text-xs text-red-600 font-semibold hover:underline bg-red-50 px-2 py-1 rounded">✕ 清除簽名</button>
             </div>
-            <!-- 表單側預覽 -->
             <div id="formSigPreviewBox" class="mt-2 hidden border border-dashed border-slate-300 p-2 text-center bg-white rounded">
               <img id="formSigPreviewImg" class="h-10 mx-auto object-contain" alt="簽名預覽">
             </div>
@@ -84,7 +84,7 @@
         </div>
       </div>
 
-      <!-- 報價單附件上傳（機構圖/設備示意圖） -->
+      <!-- 報價單附件上傳 -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-emerald-200 bg-emerald-50/20">
         <h2 class="font-bold text-lg text-emerald-900 border-b border-emerald-200 pb-2 mb-4 flex items-center justify-between">
           <span>📷 報價單附件 (機構圖 / 設備示意圖)</span>
@@ -93,10 +93,7 @@
         <div>
           <label class="block text-xs text-slate-600 mb-2">上傳圖片檔 (可一次選取多張 JPG/PNG)</label>
           <input type="file" id="attachmentInput" multiple accept="image/*" onchange="handleAttachmentsUpload(event)" class="w-full text-xs text-slate-500 border rounded p-2 bg-white cursor-pointer">
-          
-          <div id="attachmentsPreviewList" class="mt-3 space-y-2">
-            <!-- 動態顯示已上傳附件列表 -->
-          </div>
+          <div id="attachmentsPreviewList" class="mt-3 space-y-2"></div>
         </div>
       </div>
 
@@ -106,12 +103,10 @@
           <h2 class="font-bold text-lg text-slate-700">🧩 標準設備與模組選購</h2>
           <span id="loadingStatus" class="text-xs text-blue-600 font-medium">載入價格庫中...</span>
         </div>
-        <div id="moduleCategories" class="space-y-6">
-          <!-- 動態載入分類項目 -->
-        </div>
+        <div id="moduleCategories" class="space-y-6"></div>
       </div>
 
-      <!-- 非標 / 客製化新增項目區 -->
+      <!-- 客製化新增項目區 -->
       <div class="bg-white p-5 rounded-lg shadow-sm border border-amber-200 bg-amber-50/20">
         <div class="flex justify-between items-center border-b border-amber-200 pb-2 mb-4">
           <h2 class="font-bold text-lg text-amber-800 flex items-center gap-1.5">
@@ -122,14 +117,12 @@
           </button>
         </div>
         <p class="text-xs text-slate-500 mb-3">非標準模組庫內的項目（如工程手續費、專用客製治具等），可在這裡直接填寫：</p>
-        <div id="customItemsList" class="space-y-3">
-          <!-- 動態新增客製項目列 -->
-        </div>
+        <div id="customItemsList" class="space-y-3"></div>
       </div>
 
     </div>
 
-    <!-- 右側：即時成本/毛利與摘要試算 (5 欄) -->
+    <!-- 右側：即時成本/毛利與摘要試算 -->
     <div class="lg:col-span-5 space-y-6">
       <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 sticky top-20">
         <h2 class="font-bold text-lg text-slate-700 border-b pb-2 mb-4">📊 報價金額與利潤試算</h2>
@@ -158,9 +151,7 @@
 
         <div class="mt-6">
           <h3 class="font-semibold text-sm text-slate-500 mb-2">已選項目清單 (<span id="selectedCount">0</span>)</h3>
-          <ul id="selectedList" class="text-xs space-y-1.5 max-h-60 overflow-y-auto border-t pt-2 text-slate-600">
-            <!-- 動態列出選取項目 -->
-          </ul>
+          <ul id="selectedList" class="text-xs space-y-1.5 max-h-60 overflow-y-auto border-t pt-2 text-slate-600"></ul>
         </div>
       </div>
     </div>
@@ -174,7 +165,7 @@
     <div id="pdfContent" class="pdf-page shadow-lg rounded-sm text-slate-900 text-sm flex flex-col justify-between">
       
       <div>
-        <!-- 公司抬頭圖片：讀取同資料夾中的 logo.jpg，並加上 crossorigin 避免跨域問題 -->
+        <!-- 💡 讀取相對路徑的 logo.jpg -->
         <div class="border-b-2 border-slate-800 pb-2 mb-3">
           <img src="./logo.jpg" crossorigin="anonymous" alt="華勝科技股份有限公司" class="w-full h-auto object-contain">
         </div>
@@ -292,20 +283,386 @@
     let attachmentFiles = [];
 
     window.onload = function() {
-      // 移除原有的 JavaScript 覆蓋 src，直接讓 HTML 中的 <img src="./logo.jpg"> 發揮作用。
+      // 使用 fetch 進行安全抓取並附帶錯誤偵測
+      fetch(CSV_URL)
+        .then(response => {
+          if (!response.ok) throw new Error("HTTP 狀態碼錯誤: " + response.status);
+          return response.text();
+        })
+        .then(csvText => {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: 'greedy', // 忽略空白列
+            complete: function(results) {
+              try {
+                // 寬鬆過濾：只要「模組編號」欄位有值就顯示，不再限制特定格式 (防呆處理)
+                modulesData = results.data.filter(r => {
+                  const id = r['模組編號'] || r['模組編號 ']; // 防止多出空白
+                  return id && String(id).trim() !== '';
+                });
+
+                if(modulesData.length === 0) {
+                  throw new Error("表格內沒有找到任何包含『模組編號』的項目，請確認試算表欄位名稱。");
+                }
+
+                document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
+                document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
+
+                renderModules();
+                updatePreview();
+              } catch (e) {
+                console.error("資料處理發生異常:", e);
+                document.getElementById('loadingStatus').innerText = '❌ ' + e.message;
+                document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-red-500');
+              }
+            },
+            error: function(err) {
+              console.error("PapaParse 解析錯誤:", err);
+              document.getElementById('loadingStatus').innerText = '❌ 價格庫解析失敗';
+              document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-red-500');
+            }
+          });
+        })
+        .catch(err => {
+          console.error("網路連線錯誤:", err);
+          document.getElementById('loadingStatus').innerText = '❌ 網路連線錯誤，無法載入價格庫';
+          document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-red-500');
+        });
+    };
+
+    function renderModules() {
+      const container = document.getElementById('moduleCategories');
+      container.innerHTML = '';
+
+      // 安全取得類別
+      const categories = [...new Set(modulesData.map(m => (m['模組類別'] || '未分類').trim()))];
+
+      categories.forEach(cat => {
+        const catItems = modulesData.filter(m => (m['模組類別'] || '未分類').trim() === cat);
+        let html = `<div class="border rounded-md p-3 bg-slate-50"><h3 class="font-bold text-sm text-slate-700 mb-2">${cat}</h3><div class="space-y-2">`;
+
+        catItems.forEach(item => {
+          const id = String(item['模組編號'] || '').trim();
+          const name = item['項目名稱'] || '未命名項目';
+          const spec = item['規格與功能說明'] || '';
+          
+          const isSelected = selectedItems[id]?.selected || false;
+          const qty = selectedItems[id]?.qty || 1;
+          
+          // 安全轉換數字，避免 Replace is not a function 錯誤
+          const priceStr = String(item['標準售價(NTD)'] || '0').replace(/,/g, '');
+          const price = Number(priceStr) || 0;
+
+          html += `
+            <div class="flex items-center justify-between bg-white p-2.5 rounded border text-sm">
+              <div class="flex items-start gap-2 flex-1 pr-2">
+                <input type="checkbox" id="chk_${id}" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${id}')" class="mt-1 rounded text-blue-600 cursor-pointer">
+                <div>
+                  <label for="chk_${id}" class="font-semibold text-slate-800 cursor-pointer">${name} <span class="text-xs text-slate-400">(${id})</span></label>
+                  <p class="text-xs text-slate-500">${spec}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold text-slate-600">NT$ ${price.toLocaleString()}</span>
+                <input type="number" min="1" value="${qty}" onchange="updateQty('${id}', this.value)" ${!isSelected ? 'disabled' : ''} class="w-14 border rounded p-1 text-center text-xs">
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div></div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    function handleSignatureUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          signatureDataUrl = e.target.result;
+          
+          const pdfImg = document.getElementById('pdfSignatureImg');
+          pdfImg.src = signatureDataUrl;
+          pdfImg.classList.remove('hidden');
+
+          const formImg = document.getElementById('formSigPreviewImg');
+          formImg.src = signatureDataUrl;
+          document.getElementById('formSigPreviewBox').classList.remove('hidden');
+          document.getElementById('sigUploadStatus').innerText = '✅ 簽名檔已載入';
+          document.getElementById('sigUploadStatus').className = 'text-xs text-emerald-600 font-semibold';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function clearSignature() {
+      signatureDataUrl = '';
+      document.getElementById('signatureInput').value = '';
       
-      Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        complete: function(results) {
-          const codeRegex = /^[A-Z]-\d+/i;
-          modulesData = results.data.filter(r => r['模組編號'] && codeRegex.test(r['模組編號'].trim()));
+      const pdfImg = document.getElementById('pdfSignatureImg');
+      pdfImg.src = '';
+      pdfImg.classList.add('hidden');
 
-          document.getElementById('loadingStatus').innerText = '✅ 價格庫已成功同步';
-          document.getElementById('loadingStatus').classList.replace('text-blue-600', 'text-emerald-600');
+      document.getElementById('formSigPreviewBox').classList.add('hidden');
+      document.getElementById('sigUploadStatus').innerText = '尚未上傳簽名圖片';
+      document.getElementById('sigUploadStatus').className = 'text-xs text-slate-400';
+    }
 
-          renderModules();
+    function handleAttachmentsUpload(event) {
+      const files = Array.from(event.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          attachmentFiles.push({
+            id: 'ATT_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: file.name,
+            src: e.target.result
+          });
+          renderAttachmentsList();
           updatePreview();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function removeAttachment(id) {
+      attachmentFiles = attachmentFiles.filter(att => att.id !== id);
+      renderAttachmentsList();
+      updatePreview();
+    }
+
+    function renderAttachmentsList() {
+      const container = document.getElementById('attachmentsPreviewList');
+      container.innerHTML = '';
+
+      attachmentFiles.forEach((att) => {
+        container.innerHTML += `
+          <div class="flex items-center justify-between bg-white p-2 rounded border text-xs">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <img src="${att.src}" class="w-8 h-8 object-cover rounded border">
+              <span class="truncate font-medium text-slate-700">${att.name}</span>
+            </div>
+            <button onclick="removeAttachment('${att.id}')" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">✕ 刪除</button>
+          </div>
+        `;
+      });
+    }
+
+    function addCustomItem() {
+      customItems.push({
+        id: 'CUST_' + Date.now(),
+        name: '客製化項目',
+        spec: '依客戶規格客製',
+        unit: '項',
+        qty: 1,
+        cost: 0,
+        price: 0
+      });
+      renderCustomItems();
+      updatePreview();
+    }
+
+    function removeCustomItem(index) {
+      customItems.splice(index, 1);
+      renderCustomItems();
+      updatePreview();
+    }
+
+    function renderCustomItems() {
+      const container = document.getElementById('customItemsList');
+      container.innerHTML = '';
+
+      customItems.forEach((item, index) => {
+        container.innerHTML += `
+          <div class="bg-white p-3 rounded border border-amber-200 text-xs space-y-2">
+            <div class="flex justify-between items-center gap-2">
+              <input type="text" value="${item.name}" placeholder="項目名稱" oninput="customItems[${index}].name = this.value; updatePreview();" class="font-bold border rounded p-1 flex-1">
+              <button onclick="removeCustomItem(${index})" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">✕ 刪除</button>
+            </div>
+            <input type="text" value="${item.spec}" placeholder="規格說明" oninput="customItems[${index}].spec = this.value; updatePreview();" class="w-full border rounded p-1 text-slate-500">
+            <div class="grid grid-cols-4 gap-2 pt-1">
+              <div><label class="text-[10px] text-slate-400 block">數量</label><input type="number" min="1" value="${item.qty}" oninput="customItems[${index}].qty = Math.max(1, parseInt(this.value)||1); updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">單位</label><input type="text" value="${item.unit}" oninput="customItems[${index}].unit = this.value; updatePreview();" class="w-full border rounded p-1 text-center"></div>
+              <div><label class="text-[10px] text-slate-400 block">成本(NTD)</label><input type="number" value="${item.cost}" oninput="customItems[${index}].cost = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right"></div>
+              <div><label class="text-[10px] text-slate-400 block">售價(NTD)</label><input type="number" value="${item.price}" oninput="customItems[${index}].price = parseFloat(this.value)||0; updatePreview();" class="w-full border rounded p-1 text-right font-bold text-amber-900"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function toggleSelect(id) {
+      if (!selectedItems[id]) selectedItems[id] = { selected: false, qty: 1 };
+      selectedItems[id].selected = !selectedItems[id].selected;
+      renderModules();
+      updatePreview();
+    }
+
+    function updateQty(id, qty) {
+      if (selectedItems[id]) {
+        selectedItems[id].qty = Math.max(1, parseInt(qty) || 1);
+        updatePreview();
+      }
+    }
+
+    function updatePreview() {
+      let totalRevenue = 0;
+      let totalCost = 0;
+      let count = 0;
+
+      const pdfBody = document.getElementById('pdfTableBody');
+      const selectedListUI = document.getElementById('selectedList');
+      pdfBody.innerHTML = '';
+      selectedListUI.innerHTML = '';
+
+      modulesData.forEach(item => {
+        const id = String(item['模組編號'] || '').trim();
+        const sel = selectedItems[id];
+
+        if (sel && sel.selected) {
+          count++;
+          const qty = sel.qty;
+          const priceStr = String(item['標準售價(NTD)'] || '0').replace(/,/g, '');
+          const costStr = String(item['預估成本(NTD)'] || '0').replace(/,/g, '');
+          
+          const price = Number(priceStr) || 0;
+          const cost = Number(costStr) || 0;
+          const name = item['項目名稱'] || '';
+          const spec = item['規格與功能說明'] || '';
+          const unit = item['預設單位'] || '';
+          
+          const itemSubtotal = price * qty;
+          const itemCostTotal = cost * qty;
+
+          totalRevenue += itemSubtotal;
+          totalCost += itemCostTotal;
+
+          selectedListUI.innerHTML += `<li class="flex justify-between"><span>${name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+          pdfBody.innerHTML += `
+            <tr>
+              <td class="p-2 text-center">${count}</td>
+              <td class="p-2"><div class="font-semibold">${name}</div><div class="text-[10px] text-slate-500">${spec}</div></td>
+              <td class="p-2 text-center">${qty}</td>
+              <td class="p-2 text-center">${unit}</td>
+              <td class="p-2 text-right">${price.toLocaleString()}</td>
+              <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+            </tr>
+          `;
+        }
+      });
+
+      customItems.forEach(cItem => {
+        count++;
+        const qty = cItem.qty || 1;
+        const price = cItem.price || 0;
+        const cost = cItem.cost || 0;
+
+        const itemSubtotal = price * qty;
+        const itemCostTotal = cost * qty;
+
+        totalRevenue += itemSubtotal;
+        totalCost += itemCostTotal;
+
+        selectedListUI.innerHTML += `<li class="flex justify-between text-amber-700"><span>[客製] ${cItem.name} x${qty}</span><span class="font-medium">NT$ ${itemSubtotal.toLocaleString()}</span></li>`;
+
+        pdfBody.innerHTML += `
+          <tr>
+            <td class="p-2 text-center">${count}</td>
+            <td class="p-2"><div class="font-semibold text-amber-900">${cItem.name}</div><div class="text-[10px] text-slate-500">${cItem.spec}</div></td>
+            <td class="p-2 text-center">${qty}</td>
+            <td class="p-2 text-center">${cItem.unit}</td>
+            <td class="p-2 text-right">${price.toLocaleString()}</td>
+            <td class="p-2 text-right font-medium">${itemSubtotal.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+
+      // 計算頁碼置中
+      const totalPages = 1 + attachmentFiles.length;
+      document.getElementById('pdfPageNum1').innerText = `第 1 頁 / 共 ${totalPages} 頁`;
+
+      // 渲染 PDF 附件頁面
+      const pdfAttContainer = document.getElementById('pdfAttachmentsContainer');
+      pdfAttContainer.innerHTML = '';
+
+      if (attachmentFiles.length > 0) {
+        pdfAttContainer.classList.remove('hidden');
+        attachmentFiles.forEach((att, index) => {
+          const pageIndex = index + 2;
+          pdfAttContainer.innerHTML += `
+            <div class="page-break pt-6 flex flex-col justify-between min-h-[270mm]">
+              <div>
+                <div class="border-b-2 border-slate-800 pb-2 mb-4 flex justify-between items-center">
+                  <h3 class="font-bold text-base text-slate-800">📷 報價單附件 (${index + 1}/${attachmentFiles.length}) - ${att.name}</h3>
+                  <span class="text-xs text-slate-500">華勝科技股份有限公司</span>
+                </div>
+                <div class="flex justify-center items-center p-2 bg-slate-50 border rounded min-h-[600px]">
+                  <img src="${att.src}" class="max-w-full max-h-[220mm] object-contain rounded shadow-sm">
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-200 text-center text-[10px] text-slate-400 tracking-wider">
+                第 ${pageIndex} 頁 / 共 ${totalPages} 頁
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        pdfAttContainer.classList.add('hidden');
+      }
+
+      const totalMargin = totalRevenue - totalCost;
+      const marginRate = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
+
+      document.getElementById('statRevenue').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('statCost').innerText = `NT$ ${totalCost.toLocaleString()}`;
+      document.getElementById('statMargin').innerText = `NT$ ${totalMargin.toLocaleString()}`;
+      document.getElementById('statMarginRate').innerText = `${marginRate}%`;
+      document.getElementById('selectedCount').innerText = count;
+
+      document.getElementById('pdfCustName').innerText = document.getElementById('custName').value;
+      document.getElementById('pdfCustContact').innerText = document.getElementById('custContact').value;
+      document.getElementById('pdfQuoteNo').innerText = document.getElementById('quoteNo').value;
+      document.getElementById('pdfQuoteDate').innerText = document.getElementById('quoteDate').value;
+      document.getElementById('pdfGlueSpec').innerText = document.getElementById('glueSpec').value;
+      document.getElementById('pdfPaymentTerm').innerText = document.getElementById('paymentTerm').value;
+      document.getElementById('pdfSalesName').innerText = document.getElementById('salesName').value;
+
+      const tax = Math.round(totalRevenue * 0.05);
+      document.getElementById('pdfSubtotal').innerText = `NT$ ${totalRevenue.toLocaleString()}`;
+      document.getElementById('pdfTax').innerText = `NT$ ${tax.toLocaleString()}`;
+      document.getElementById('pdfTotal').innerText = `NT$ ${(totalRevenue + tax).toLocaleString()}`;
+    }
+
+    function renderUI() {
+      const showInternal = document.getElementById('toggleInternal').checked;
+      document.getElementById('internalCalcBox').style.display = showInternal ? 'block' : 'none';
+    }
+
+    function exportPDF() {
+      const element = document.getElementById('pdfContent');
+      const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
+      const custName = document.getElementById('custName').value || 'Customer';
+
+      window.scrollTo(0, 0);
+
+      const opt = {
+        margin:       0,
+        filename:     `${custName}_報價單_${quoteNo}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          scrollY: 0, 
+          scrollX: 0,
+          logging: false 
         },
-        error: function(err) {
-          document.getElementById('loadingStatus').innerText = '❌ 價格
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>
